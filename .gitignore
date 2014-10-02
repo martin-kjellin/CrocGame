@@ -1,0 +1,13 @@
+*.h
+*.vcxproj
+*.filters
+*.user
+*.tlog
+*.lastbuildstate
+*.log
+stdafx.cpp
+*.pdb
+*.obj
+*.unsuccessfulbuild
+*.idb
+ReadMe.txt
