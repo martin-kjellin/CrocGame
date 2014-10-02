@@ -30,11 +30,9 @@ int _tmain(int argc, _TCHAR* argv[])
 	bool gameStillGoingOn = true;
 
 	session.StartGame();
-	//while(gameStillGoingOn){
+	while(gameStillGoingOn){
 		session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading);
 		session.GetGameDistributions(calcium, salinity, alkalinity);
-
-		
 
 		std::wcout << L"score: "<< score << L"\n";
 		std::wcout << L"playerLocation: "<< playerLocation << L"\n";
@@ -44,19 +42,25 @@ int _tmain(int argc, _TCHAR* argv[])
 		std::wcout << L"salineReading: "<< salineReading << L"\n";
 		std::wcout << L"alkalinityReading: "<< alkalinityReading << L"\n";
 
-		std::wcout << L"paths[0][0]: "<< paths[0][0] << L"\n";
+		std::wcout << L"paths[0][0]: "<< paths[0][0] << L"\n"; //
 
-		int theMove = playerLocation + 1;
+
+
+		_ULonglong theMove = playerLocation + 1;
 		std::wstring playerMove  = L"" + std::to_wstring(theMove);
 		std::wstring playerMove2 = L"S";
 
-		session.makeMove (playerMove ,playerMove2, score);
+		gameStillGoingOn = session.makeMove (playerMove ,playerMove2, score);
+
+
+		session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading); //
+		std::wcout << L"playerLocation: "<< playerLocation << L"\n"; //
+
+
+
 		while(true);
 
-
-		//gameStillGoingOn = makeMove(...);
-
-	//}
+	}
 	return 0;
 }
 

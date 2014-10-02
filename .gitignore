@@ -11,3 +11,7 @@ stdafx.cpp
 *.unsuccessfulbuild
 *.idb
 ReadMe.txt
+*.manifest
+*.res
+*.cache
+*.rc
