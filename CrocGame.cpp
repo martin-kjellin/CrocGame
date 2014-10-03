@@ -27,40 +27,37 @@ int _tmain(int argc, _TCHAR* argv[])
 	CrocSession session(name, OK);
 	paths = session.getPaths();
 
-	bool gameStillGoingOn = true;
+	for(int i = 0; i < 100; i++){
+		bool gameStillGoingOn = true;
 
-	session.StartGame();
-	while(gameStillGoingOn){
-		session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading);
-		session.GetGameDistributions(calcium, salinity, alkalinity);
+		session.StartGame();
+		while(gameStillGoingOn){
+			session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading);
+			session.GetGameDistributions(calcium, salinity, alkalinity);
 
-		std::wcout << L"score: "<< score << L"\n";
-		std::wcout << L"playerLocation: "<< playerLocation << L"\n";
-		std::wcout << L"backpacker1Activity: "<< backpacker1Activity << L"\n";
-		std::wcout << L"backpacker2Activity: "<< backpacker2Activity << L"\n";
-		std::wcout << L"calciumReading: "<< calciumReading << L"\n";
-		std::wcout << L"salineReading: "<< salineReading << L"\n";
-		std::wcout << L"alkalinityReading: "<< alkalinityReading << L"\n";
+			/*
+			std::wcout << L"score: "<< score << L"\n";
+			std::wcout << L"playerLocation: "<< playerLocation << L"\n";
+			std::wcout << L"backpacker1Activity: "<< backpacker1Activity << L"\n";
+			std::wcout << L"backpacker2Activity: "<< backpacker2Activity << L"\n";
+			std::wcout << L"calciumReading: "<< calciumReading << L"\n";
+			std::wcout << L"salineReading: "<< salineReading << L"\n";
+			std::wcout << L"alkalinityReading: "<< alkalinityReading << L"\n";
+			*/
+			int size = paths[playerLocation-1].size();
+			int random = rand() % size;
 
-		std::wcout << L"paths[0][0]: "<< paths[0][0] << L"\n"; //
+			_ULonglong theMove = paths[playerLocation-1][random];
+			std::wstring playerMove  = L"" + std::to_wstring(theMove);
+			std::wstring playerMove2 = L"S";
 
+			gameStillGoingOn = session.makeMove (playerMove ,playerMove2, score);
 
-
-		_ULonglong theMove = playerLocation + 1;
-		std::wstring playerMove  = L"" + std::to_wstring(theMove);
-		std::wstring playerMove2 = L"S";
-
-		gameStillGoingOn = session.makeMove (playerMove ,playerMove2, score);
-
-
-		session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading); //
-		std::wcout << L"playerLocation: "<< playerLocation << L"\n"; //
-
-
-
-		while(true);
-
+		}
 	}
+	session.PostResults();
+	std::wcout << L"Average: " << session.getAverage() << "\n"; //
+	while(true); 
 	return 0;
 }
 
