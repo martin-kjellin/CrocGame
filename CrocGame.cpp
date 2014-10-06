@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include <iostream>
 #include <string>
+#include <array>
 #include "CrocGame.h"  
 #pragma comment(lib,"wherescrocengine") 
 
@@ -19,6 +20,56 @@ double alkalinityReading;
 std::vector<std::pair<double,double>> calcium;
 std::vector<std::pair<double,double>> salinity;
 std::vector<std::pair<double,double>> alkalinity;
+
+
+//probability: fill with 1/35
+double probability[4][35] = {{},{},{},{}}; //calcium, salinity, alkalinity, total
+
+//return probability for reading given mean and stard deviation
+double valueProbability(double reading, double mean, double std_dev){
+	return 0;
+}
+
+void calculateProbability (double reading){
+	int c, i, j, t;
+	for(c = 0; c < 3; c++){
+		double oldProbability[35];// = probability[c]; //put the values of probability in oldProbability
+		
+		memcpy(probability[c], oldProbability, 35);
+
+		for(t = 0; t <35; t++){
+			probability[c][t] = 0;//probability[c].fill(0); //fill with zeros
+		}
+
+		for(i=0; i < 35; i++){
+			for(j=0; j < paths[i].size(); j++){
+				probability[c][i] += (1.0 / paths[j-1].size()) * oldProbability[j-1]; //P(Xt+1 | Xt)* P(Xt | E1:t)
+			}
+
+			//get the mean and standard deviation
+			double mean;
+			double std_dev;
+			switch(c){
+			case 0:
+				mean = calcium[i].first;
+				std_dev = calcium[i].second;
+			case 1:
+				mean = salinity[i].first;
+				std_dev = salinity[i].second;
+			case 2:
+				mean = alkalinity[i].first;
+				std_dev = alkalinity[i].second;
+			}
+
+			double dataProb =  valueProbability(reading, mean, std_dev);    // P(Et+1 | X)
+			probability[c][i] *= dataProb;
+		}
+	}
+}
+
+
+
+
 
 int _tmain(int argc, _TCHAR* argv[])
 {
