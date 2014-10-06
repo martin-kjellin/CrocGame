@@ -35,13 +35,18 @@ int _tmain(int argc, _TCHAR* argv[])
 			session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading);
 			session.GetGameDistributions(calcium, salinity, alkalinity);
 
+			/*int i;
+			for(i = 0; i < 35; i++){
+			std::wcout << i << L": calcium mean: " << calcium[i].first << "    calcium std dev: " << calcium[i].second << "\n";
+			}
+			*/
 			/*
 			std::wcout << L"score: "<< score << L"\n";
 			std::wcout << L"playerLocation: "<< playerLocation << L"\n";
 			std::wcout << L"backpacker1Activity: "<< backpacker1Activity << L"\n";
-			std::wcout << L"backpacker2Activity: "<< backpacker2Activity << L"\n";
+			std::wcout << L"backpacker2Activity: "<< backpacker2Activity << L"\n";*/
 			std::wcout << L"calciumReading: "<< calciumReading << L"\n";
-			std::wcout << L"salineReading: "<< salineReading << L"\n";
+			/*std::wcout << L"salineReading: "<< salineReading << L"\n";
 			std::wcout << L"alkalinityReading: "<< alkalinityReading << L"\n";
 			*/
 			int size = paths[playerLocation-1].size();
