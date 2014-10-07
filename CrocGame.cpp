@@ -27,6 +27,58 @@ std::vector<std::pair<double,double>> alkalinity;
 //probability: fill with 1/35
 double probability[35] = {}; //index 0 is waterhole 1
 
+void fillProbability(double value){
+	int i;
+	for(i = 0; i < 35; i++){
+		probability[i] = value;
+	}
+}
+
+//sets the start probabilities while accounting for backpackers
+void accountForBackpackersStart(){
+	int t;
+	if(backpacker1Activity > 0 && backpacker2Activity > 0){
+		if(backpacker1Activity != backpacker2Activity){ //both alive and at different places
+			fillProbability(1.0/33.0);
+			probability[backpacker1Activity-1] = 0;
+			probability[backpacker2Activity-1] = 0;
+		}
+		else{ //both alive at the same place
+			fillProbability(1.0/34.0);
+			probability[backpacker1Activity-1] = 0;
+		}
+	}
+	else{ //one or both are being eaten / have been eaten
+		if(backpacker1Activity < 0){
+			fillProbability(0.0);
+			probability[abs(backpacker1Activity)-1] = 1.0;
+		}
+		if(backpacker2Activity < 0){
+			fillProbability(0.0);
+			probability[abs(backpacker2Activity)-1] = 1.0;
+		}
+	}
+}
+
+//change the probability depending on backpackers
+void accountForBackpackersDuring(){
+	if(backpacker1Activity > 0){
+		probability[backpacker1Activity-1] = 0.0;	
+	}
+	if(backpacker2Activity > 0){
+		probability[backpacker2Activity-1] = 0.0;	
+	}
+	if(backpacker1Activity < 0){
+		fillProbability(0.0);
+		probability[abs(backpacker1Activity)-1] = 1.0;
+	}
+	if(backpacker2Activity < 0){
+		fillProbability(0.0);
+		probability[abs(backpacker2Activity)-1] = 1.0;
+	}
+}
+
+
 //return probability for reading given mean and stard deviation
 double valueProbability(double reading, double mean, double std_dev){
 	//normal distribution -> pdf 
@@ -45,9 +97,10 @@ void calculateProbability (double readingCalcium, double readingSalinity, double
 	for(c = 0; c < 3; c++){ //0 = calcium, 1 = salinity, 2 = alkalinity 
 		for(i=0; i < 35; i++){
 			for(j=0; j < paths[i].size(); j++){
-				newProbability[c][i] += (1.0 / (paths[j-1].size() + 1)) * probability[j-1]; //P(Xt+1 | Xt)* P(Xt | E1:t)
+				int adjNode = paths[i][j];
+				newProbability[c][i] += (1.0 / (paths[adjNode-1].size() + 1)) * probability[adjNode-1]; //P(Xt+1 | Xt)* P(Xt | E1:t)  //P(croc comes from any adjecent waterhole)
 			}
-			newProbability[c][i] += (1.0 / (paths[i-1].size() + 1)) * probability[i]; //P(croc stay at the waterhole)
+			newProbability[c][i] += (1.0 / (paths[i].size() + 1)) * probability[i]; //P(croc stay at the waterhole)
 
 			//get the mean and standard deviation
 			double mean;
@@ -99,29 +152,19 @@ int _tmain(int argc, _TCHAR* argv[])
 		bool gameStillGoingOn = true;
 
 		session.StartGame();
-		int t;
-		for(t = 0; t <35; t++){
-			probability[t] = 1.0/35.0;	 //fill probability with prob 1/35 ... ta bort hitchhikers position?
-		}
+		session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading); //run here to get info for accountForBackpackersStart
+		session.GetGameDistributions(calcium, salinity, alkalinity);
+		accountForBackpackersStart();
+
 		while(gameStillGoingOn){
 			session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading);
-			session.GetGameDistributions(calcium, salinity, alkalinity);
-
-			
-
-			/*int i;
-			for(i = 0; i < 35; i++){
-			std::wcout << i << L": calcium mean: " << calcium[i].first << "    calcium std dev: " << calcium[i].second << "\n";
-			}
-			*/
-
+			int t;
 			for(t = 0; t < 35; t++){
 				std::wcout << t +1 << ": " << probability[t] << "\n";
 			}
-			int wait;
-			std::cin >> wait;
 			
 			calculateProbability(calciumReading, salineReading, alkalinityReading);
+			accountForBackpackersDuring();
 			
 			/*
 			std::wcout << L"score: "<< score << L"\n";
@@ -130,10 +173,10 @@ int _tmain(int argc, _TCHAR* argv[])
 			std::wcout << L"backpacker2Activity: "<< backpacker2Activity << L"\n";
 			std::wcout << L"calciumReading: "<< calciumReading << L"\n";
 			std::wcout << L"salineReading: "<< salineReading << L"\n";
-			std::wcout << L"alkalinityReading: "<< alkalinityReading << L"\n";
-			int wait;
-			std::cin >> wait;
-			*/
+			std::wcout << L"alkalinityReading: "<< alkalinityReading << L"\n";*/
+			//int wait;
+			//std::cin >> wait;
+			
 
 			/*move to random location*/
 			int size = paths[playerLocation-1].size();
@@ -143,8 +186,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			std::wstring playerMove  = L"" + std::to_wstring(theMove);
 			std::wstring playerMove2 = L"S";
 
-			gameStillGoingOn = session.makeMove (playerMove ,playerMove2, score);
-
+			gameStillGoingOn = session.makeMove (playerMove ,playerMove2, score);	
 		}
 	}
 	session.PostResults();
@@ -152,4 +194,3 @@ int _tmain(int argc, _TCHAR* argv[])
 	while(true); 
 	return 0;
 }
-
