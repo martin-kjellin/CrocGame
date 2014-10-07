@@ -42,17 +42,14 @@ void calculateProbability (double readingCalcium, double readingSalinity, double
 	int c, i, j, t;
 	double oldProbability[35];	//put the values of probability in oldProbability
 	memcpy(probability, oldProbability, 35);
-	for(t = 0; t <35; t++){
-			probability[t] = 0;	 //fill probability with zeros
-	}
+
 	double newProbability[3][35] = {{},{},{}};
 	for(c = 0; c < 3; c++){ //0 = calcium, 1 = salinity, 2 = alkalinity 
-
 		for(i=0; i < 35; i++){
 			for(j=0; j < paths[i].size(); j++){
 				newProbability[c][i] += (1.0 / (paths[j-1].size() + 1)) * oldProbability[j-1]; //P(Xt+1 | Xt)* P(Xt | E1:t)
 			}
-			newProbability[c][i] += (1.0 / (paths[j-1].size() + 1)) * oldProbability[i]; //P(croc stay at the waterhole)
+			newProbability[c][i] += (1.0 / (paths[i-1].size() + 1)) * oldProbability[i]; //P(croc stay at the waterhole)
 
 			//get the mean and standard deviation
 			double mean;
@@ -104,20 +101,30 @@ int _tmain(int argc, _TCHAR* argv[])
 		bool gameStillGoingOn = true;
 
 		session.StartGame();
+		int t;
+		for(t = 0; t <35; t++){
+			probability[t] = 1.0/35.0;	 //fill probability with prob 1/35 ... ta bort hitchhikers position?
+		}
 		while(gameStillGoingOn){
 			session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading);
 			session.GetGameDistributions(calcium, salinity, alkalinity);
 
-			int t;
-			for(t = 0; t <35; t++){
-				probability[t] = 1.0/35.0;	 //fill probability with prob 1/35 ... ta bort hitchhikers position?
-			}
+			
 
 			/*int i;
 			for(i = 0; i < 35; i++){
 			std::wcout << i << L": calcium mean: " << calcium[i].first << "    calcium std dev: " << calcium[i].second << "\n";
 			}
 			*/
+
+			/*for(t = 0; t < 35; t++){
+				std::wcout << t +1 << ": " << probability[t] << "\n";
+			}
+			int wait;
+			std::cin >> wait;
+			*/
+			calculateProbability(calciumReading, salineReading, alkalinityReading);
+			
 			/*
 			std::wcout << L"score: "<< score << L"\n";
 			std::wcout << L"playerLocation: "<< playerLocation << L"\n";
@@ -126,8 +133,9 @@ int _tmain(int argc, _TCHAR* argv[])
 			std::wcout << L"calciumReading: "<< calciumReading << L"\n";
 			std::wcout << L"salineReading: "<< salineReading << L"\n";
 			std::wcout << L"alkalinityReading: "<< alkalinityReading << L"\n";
+			int wait;
+			std::cin >> wait;
 			*/
-
 
 			/*move to random location*/
 			int size = paths[playerLocation-1].size();
