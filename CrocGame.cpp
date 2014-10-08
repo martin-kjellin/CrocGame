@@ -5,6 +5,7 @@
 #include <math.h>
 #include "CrocGame.h"
 #include <map>
+#include <windows.h>
 #define _USE_MATH_DEFINES
 #pragma comment(lib,"wherescrocengine")
 //stays the same throughout session
@@ -40,12 +41,6 @@ void makeFastPath(int startLocation) {
 	while(parent.count(currentIndex)>0) {
 		fastPath.push_back(parent[currentIndex]);
 		currentIndex = parent[currentIndex];
-	}
-
-	std::wcout << L"Start location = " << startLocation << L"\n";
-	std::wcout << L"End location = " << maxIndex << L"\n";
-	for(int i=0;i<fastPath.size();i++) {
-		std::wcout << "i: " << fastPath[i] << L"\n";
 	}
 
 }
@@ -213,42 +208,28 @@ int _tmain(int argc, _TCHAR* argv[])
 		while(gameStillGoingOn){
 			session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading);
 			int t;
-			//for(t = 0; t < 35; t++){
-			//	std::wcout << t +1 << ": " << probability[t] << "\n";
-			//}
 			calculateProbability(calciumReading, salineReading, alkalinityReading);
 			accountForBackpackersDuring();
-			/*
-			std::wcout << L"score: "<< score << L"\n";
-			std::wcout << L"playerLocation: "<< playerLocation << L"\n";
-			std::wcout << L"backpacker1Activity: "<< backpacker1Activity << L"\n";
-			std::wcout << L"backpacker2Activity: "<< backpacker2Activity << L"\n";
-			std::wcout << L"calciumReading: "<< calciumReading << L"\n";
-			std::wcout << L"salineReading: "<< salineReading << L"\n";
-			std::wcout << L"alkalinityReading: "<< alkalinityReading << L"\n";*/
-			//int wait;
-			//std::cin >> wait;
 
 			breadthFirstSearch(playerLocation-1);
-
 			makeFastPath(playerLocation-1);
 
-			///*move to random location*/
-			//int size = paths[playerLocation-1].size();
-			//int random = rand() % size;
-			//_ULonglong theMove = paths[playerLocation-1][random];
-			//std::wstring playerMove = L"" + std::to_wstring(theMove);
-			//std::wstring playerMove2 = L"S";
-			//gameStillGoingOn = session.makeMove (playerMove ,playerMove2, score);
+			auto maxElement = std::max_element(std::begin(probability),std::end(probability));
+			int maxIndex = std::distance(std::begin(probability),maxElement);
+
+			std::wcout << L"Score: " << score << L"\n";
+
+			std::wcout << L"Location: " << playerLocation-1 << L"\n";
+			std::wcout << L"Goal: " << maxIndex << L"\n";
+
+			std::wcout << L"probability[maxIndex] = " << probability[maxIndex] << L"\n";
+
+			for(int i=0;i<fastPath.size();i++) {
+				std::wcout << L"fastPath[" << i << L"] = " << fastPath[i] << L"\n";
+				if(i==fastPath.size()-1) std::wcout << L"\n";
+			}
 
 			if(fastPath.size()==1) {
-				//std::wcout << L"fastPath.size()==1" << "\n";
-				//_ULonglong theMove = (playerLocation-1)+1;
-				//std::wstring secondMove = L"" + std::to_wstring(theMove);
-				//std::wstring s = L"S";
-				//std::wcout << "secondMove = " << secondMove << "\n";
-				//gameStillGoingOn = session.makeMove(s,secondMove,score);
-
 				auto maxElement = std::max_element(std::begin(probability),std::end(probability));
 				int maxIndex = std::distance(std::begin(probability),maxElement);
 
@@ -259,13 +240,6 @@ int _tmain(int argc, _TCHAR* argv[])
 
 
 			} else if(fastPath.size()==2) {
-				//std::wcout << L"fastPath.size()==2" << "\n";
-				//_ULonglong theMove = fastPath[0]+1;
-				//std::wstring firstMove = L"" + std::to_wstring(theMove);
-				//std::wstring s = L"S";
-				//std::wcout << "firstMove = " << firstMove << "\n";
-				//gameStillGoingOn = session.makeMove(firstMove,s,score);
-
 				auto maxElement = std::max_element(std::begin(probability),std::end(probability));
 				int maxIndex = std::distance(std::begin(probability),maxElement);
 
@@ -275,17 +249,16 @@ int _tmain(int argc, _TCHAR* argv[])
 				gameStillGoingOn = session.makeMove(theRealMove,s,score);
 
 			} else if(fastPath.size()>2) {
-				std::wcout << L"fastPath.size()>2" << "\n";
 				_ULonglong theMove = fastPath[fastPath.size()-2]+1;
 				std::wstring firstMove = L"" + std::to_wstring(theMove);
 				theMove = fastPath[fastPath.size()-3]+1;
 				std::wstring secondMove = L"" + std::to_wstring(theMove);
-				std::wcout << "firstMove = " << firstMove << "\n";
-				std::wcout << "secondMove = " << secondMove << "\n";
 				gameStillGoingOn = session.makeMove(firstMove,secondMove,score);
 			}
 				length.clear();
 				parent.clear();
+
+				Sleep(5000);
 		}
 	}
 	session.PostResults();
