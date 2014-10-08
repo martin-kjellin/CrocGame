@@ -22,43 +22,84 @@
 
 \section{Introduction}
 
-Lorem ipsum dolor sit amet ...
+This report describes the algorithms that are used in our program to compete
+on the Where's Croc game. The goal of the game is to find the crocodile Croc,
+which can be located at any of 35 waterholes in Wollomunga national
+park. Hopefully, he will be found before he eats the two backpackers that roam
+the park. The search is performed using a \emph{hidden Markov model} (HMM).
 
-\section{Hidden Markov Models and the State Estimation Algorithm}
+\section{Estimating Croc's Location}
 
-In order to find Croc, we will first estimate his most probable current
-location using the state estimation algorithm. Then, we will use the result of
-this estimation to decide where (in what direction) to go next.
+In order to find Croc, we first estimate his most probable current
+location using the so-called \emph{state estimation algorithm}. Then, we use
+the result of this estimation to decide where to go next (see section~\ref{hunt}).
 
-In a hidden Markov model (HMM), the state of the world at time $t$ is described by a
-state variable $S_t$. We cannot observe this state directly. Instead, we have
-access to a number of observation (evidence) variables $O^i_t$ which
-indirectly provide us with information about the state of the world.
+In a HMM, the state of the world at time $t$ is
+described by a state variable $S_t$. We cannot observe this state
+directly. Instead, we have access to a number of observation (evidence)
+variables $O^x_t$ which indirectly provide us with information about the state
+of the world.
 
 There are two types of probabilities in a HMM: transition probabilities and
 observation probabilities. %Check these terms
 Given that the world was in state $S_{t-1}$ at time $t-1$, it
 will be in state $S_t$ at time $t$ with transition probability
 $P(S_t|S_{t-1})$. Given that the world is in state $S_t$, we will observe
-$O^i_t$ with observation probability $P(O^i_t|S_t)$. %Check the formulae
+$O^x_t$ with observation probability $P(O^x_t|S_t)$.
 
-In this case, the state of the world is Croc's current location (waterhole number), so $S_t \in
-\{1, 2, \dots, 35\}$. %check indexing
+In this case, the state of the world is Croc's current location (waterhole
+number), so $S_t \in \{1, 2, \dots, 35\}$. %check indexing
 The observation variables $O^c_t$, $O^s_t$, and $O^a_t$ are the current
-readings (of calcium, salinity, and alcalinity) % check these
-from the sensor that Croc is
-carrying. These readings do not give us the observation probabilities
-directly, but since we know, for each waterhole, the expectations $\mu$ and the
+readings (of calcium, salinity, and alcalinity, respectively) from the sensor
+that Croc is carrying.
+
+We want to calculate $P(S_t|S_{t-1}, O^c_t, O^s_t, O^a_t)$ for each state,
+that is, the probability of Croc currently lurking at that waterhole
+given his previous location and the current sensor readings. This probability
+is proportional to
+\begin{equation*}
+P(O^c_t|S_t)P(O^s_t|S_t)P(O^a_t|S_t)P^*(S_t|S_{t-1})
+\end{equation*}
+where
+\begin{equation*}
+P^*(S_t|S_{t-1}) = \sum\limits_{i=1}^{35} P(S_t|S_{t-1}=i)P(S_{t-1}=i)  
+\end{equation*}
+(that is, a sum over all possible previous states).
+
+The recursive character of
+the transition probabilities calls for a base case, that is, a value $S_0$ for
+each state. If the two backpackers, when the game starts, are at two different
+waterholes and are not being eaten, we set $P(S_0) = 0$ for the waterholes
+where they are and $P(S_0) = \frac{1}{33}$ for all others. That is, we assume
+that the probability is equally distributed over all waterholes except the
+ones where Croc is apparently not currently located.
+
+The observation probabilities must be calculated from the sensor
+readings. Since we know, for each waterhole, the expectations $\mu$ and the
 standard deviations $\sigma$ of the distributions from which the readings were
 drawn, we can calculate the value of the probability density function
-$f(O^i_t)$ for each observation $O^i_t$ using the formula
+$f(O^x_t)$ for each observation $O^x_t$ using the formula
 \begin{equation*}
-  f(O^i_t) = \frac{1}{\sigma \sqrt{2 \pi}}e^{-\frac{(x-\mu)^2}{2\sigma ^2}}
+  f(O^x_t) = \frac{1}{\sigma \sqrt{2 \pi}}e^{-\frac{(O^x_t-\mu)^2}{2\sigma ^2}}
 \end{equation*}
-These values can then be used as observation probabilities in the calculation
-of the probabilities $P(S_t|S_{t-1}, O^i_t)$ for each state. % To be
-                                % continued, check ...
+In a slight abuse of probability theory, these values can then be used as
+observation probabilities. That is, we assume that
+\begin{equation*}
+  P(O^x_t|S_t) = f(O^x_t)
+\end{equation*}
 
-\section{Yet Another Section}
+The values calculated as
+\begin{equation*}
+  P(O^c_t|S_t)P(O^s_t|S_t)P(O^a_t|S_t)P^*(S_t|S_{t-1})
+\end{equation*}
+are not probabilities, that is, their sum is not 1. Therefore, they are
+normalized by being divided by the sum of the calculated values for all
+states. The results of the normalization are the desired probabilities $P(S_t|S_{t-1}, O^c_t, O^s_t, O^a_t)$.
+
+\section{Hunting Croc}
+\label{hunt}
+
+This section will describe what we do with the information about Croc's
+probable current location.
 
 \end{document}
