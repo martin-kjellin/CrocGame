@@ -1,0 +1,64 @@
+\documentclass[a4paper]{article}
+
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+%\usepackage{graphicx}
+
+\title{\textbf{Artificial Intelligence \\
+    Uppsala University -- Autumn 2014 \\
+    Report for Assignment~$2$
+    by Team~$1$
+  }
+}
+
+\author{Sander Cox \and Martin Kjellin \and Malin Lundberg \and Sverrir
+  Thorgeirsson}
+
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+Lorem ipsum dolor sit amet ...
+
+\section{Hidden Markov Models and the State Estimation Algorithm}
+
+In order to find Croc, we will first estimate his most probable current
+location using the state estimation algorithm. Then, we will use the result of
+this estimation to decide where (in what direction) to go next.
+
+In a hidden Markov model (HMM), the state of the world at time $t$ is described by a
+state variable $S_t$. We cannot observe this state directly. Instead, we have
+access to a number of observation (evidence) variables $O^i_t$ which
+indirectly provide us with information about the state of the world.
+
+There are two types of probabilities in a HMM: transition probabilities and
+observation probabilities. %Check these terms
+Given that the world was in state $S_{t-1}$ at time $t-1$, it
+will be in state $S_t$ at time $t$ with transition probability
+$P(S_t|S_{t-1})$. Given that the world is in state $S_t$, we will observe
+$O^i_t$ with observation probability $P(O^i_t|S_t)$. %Check the formulae
+
+In this case, the state of the world is Croc's current location (waterhole number), so $S_t \in
+\{1, 2, \dots, 35\}$. %check indexing
+The observation variables $O^c_t$, $O^s_t$, and $O^a_t$ are the current
+readings (of calcium, salinity, and alcalinity) % check these
+from the sensor that Croc is
+carrying. These readings do not give us the observation probabilities
+directly, but since we know, for each waterhole, the expectations $\mu$ and the
+standard deviations $\sigma$ of the distributions from which the readings were
+drawn, we can calculate the value of the probability density function
+$f(O^i_t)$ for each observation $O^i_t$ using the formula
+\begin{equation*}
+  f(O^i_t) = \frac{1}{\sigma \sqrt{2 \pi}}e^{-\frac{(x-\mu)^2}{2\sigma ^2}}
+\end{equation*}
+These values can then be used as observation probabilities in the calculation
+of the probabilities $P(S_t|S_{t-1}, O^i_t)$ for each state. % To be
+                                % continued, check ...
+
+\section{Yet Another Section}
+
+\end{document}
