@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <array>
+#include <set>
 #include <math.h>
 #include "CrocGame.h"  
 #define _USE_MATH_DEFINES
@@ -23,6 +24,113 @@ std::vector<std::pair<double,double>> calcium;
 std::vector<std::pair<double,double>> salinity;
 std::vector<std::pair<double,double>> alkalinity;
 
+/////
+class Waterhole {
+public:
+	int id;
+	int cost;
+	int estCost;
+	Waterhole *parent;
+
+	Waterhole() {
+		id = 0;
+		cost = 0;
+		estCost = 0;
+		parent = NULL;
+	}
+
+	Waterhole(int id_, int pathCost, Waterhole* parent_){
+		id = id_;
+		cost = pathCost;
+		estCost = 1;
+		parent = parent_;
+	}
+
+	bool operator() (const Waterhole& n1, const Waterhole& n2) const {
+		return n1.estCost < n2.estCost;
+	}
+};
+
+// Help function to aStar, returns the path to node
+std::vector<int> solution(Waterhole *node, int start) {
+	std::vector<int> solutionPath;
+	while ((*node).id != start) {
+		int currentLocation = (*node).id;
+		solutionPath.insert(solutionPath.begin(), currentLocation);
+		Waterhole *oldNode = node;
+		node = (*node).parent;
+		delete oldNode;
+	}
+	return solutionPath;
+}
+
+
+std::vector<int> aStar(int start, int end){
+	Waterhole startWaterhole(start, 0, NULL);
+	std::multiset<Waterhole, Waterhole> frontier;
+	frontier.insert(startWaterhole);
+	std::set<int> explored;
+	std::vector<int> returnValue;
+	while (true) {
+		if (frontier.empty()) { // No solution to the problem was found (this should never happen)
+			break;
+		} else {
+			// Get the lowest-cost node of the frontier
+			std::multiset<Waterhole, Waterhole>::iterator lowestIterator = frontier.begin();
+			Waterhole *waterhole = new Waterhole;
+			*waterhole = *lowestIterator;
+			frontier.erase(lowestIterator);
+
+			if ((*waterhole).id == end) { // The goal is reached
+				std::vector<int> solutionNodes = solution(waterhole, start);
+				for (std::vector<int>::iterator it = solutionNodes.begin(); (it /*+ 1*/) != solutionNodes.end(); it++) {
+					returnValue.push_back(*it);
+				}
+				break;
+
+			} else {
+				int current = (*waterhole).id;
+				explored.insert(current);
+				int i;
+				for(i = 0; i < paths[current - 1].size(); i++){
+					int neighbour = paths[current-1][i];
+
+					int pathCostToNode = (*waterhole).cost + 1;
+					Waterhole insertNode(neighbour, pathCostToNode, waterhole);
+					bool frontierHasInsertNode = false;
+					for (std::multiset<Waterhole, Waterhole>::iterator it = frontier.begin(); it != frontier.end(); it++) {
+						Waterhole currentNode = *it;
+						if (currentNode.id == insertNode.id) {
+							frontierHasInsertNode = true;
+						}
+					}
+					if (!frontierHasInsertNode) {
+						if (!explored.count(insertNode.id)) {
+							frontier.insert(insertNode);
+						}
+					} else {
+						std::multiset<Waterhole, Waterhole>::iterator findIterator = frontier.find(insertNode);
+						if (findIterator != frontier.end()) {
+							Waterhole oldInsertNode = *findIterator;
+							if (oldInsertNode.cost > insertNode.cost) {
+								frontier.erase(findIterator);
+								frontier.insert(insertNode);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return returnValue;
+}
+
+////////////////
+
+
+
+
+
 
 //probability: fill with 1/35
 double probability[35] = {}; //index 0 is waterhole 1
@@ -36,7 +144,6 @@ void fillProbability(double value){
 
 //sets the start probabilities while accounting for backpackers
 void accountForBackpackersStart(){
-	int t;
 	if(backpacker1Activity > 0 && backpacker2Activity > 0){
 		if(backpacker1Activity != backpacker2Activity){ //both alive and at different places
 			fillProbability(1.0/33.0);
@@ -79,7 +186,7 @@ void accountForBackpackersDuring(){
 }
 
 
-//return probability for reading given mean and stard deviation
+//return "probability" for reading given mean and stard deviation
 double valueProbability(double reading, double mean, double std_dev){
 	//normal distribution -> pdf 
 	double p;
@@ -158,33 +265,63 @@ int _tmain(int argc, _TCHAR* argv[])
 
 		while(gameStillGoingOn){
 			session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading);
-			int t;
-			for(t = 0; t < 35; t++){
-				std::wcout << t +1 << ": " << probability[t] << "\n";
-			}
+			//int t;
+			//for(t = 0; t < 35; t++){
+				//std::wcout << t +1 << ": " << probability[t] << "\n";
+			//}
 			
 			calculateProbability(calciumReading, salineReading, alkalinityReading);
 			accountForBackpackersDuring();
 			
-			/*
-			std::wcout << L"score: "<< score << L"\n";
+			int maxValue = 0, index, maxIndex; // index of min in probability - 1 
+			for(index = 0; index < 35; index++){
+				if(probability[index] > maxValue){
+					maxValue = probability[index];
+					maxIndex = index;
+				}
+			}
+
+			std::vector<int> path = aStar(playerLocation, maxIndex - 1);
+			_ULonglong theMove1;
+			_ULonglong theMove2;
+			std::wstring playerMove;
+			std::wstring playerMove2;
+			if(path.size() > 1){
+				theMove1 = path.front();
+				theMove2 = path.at(1);
+
+				playerMove  = L"" + std::to_wstring(theMove1);
+				playerMove2 = L"" + std::to_wstring(theMove2);
+			}
+			else if(path.size() > 0){
+				theMove1 = path.front();
+				playerMove  = L"" + std::to_wstring(theMove1);
+				playerMove2 = L"S";
+			}
+			else{
+				playerMove = L"S";
+				playerMove2 = L"S";
+			}
+
+
+			
+			/*std::wcout << L"score: "<< score << L"\n";
 			std::wcout << L"playerLocation: "<< playerLocation << L"\n";
 			std::wcout << L"backpacker1Activity: "<< backpacker1Activity << L"\n";
 			std::wcout << L"backpacker2Activity: "<< backpacker2Activity << L"\n";
 			std::wcout << L"calciumReading: "<< calciumReading << L"\n";
 			std::wcout << L"salineReading: "<< salineReading << L"\n";
-			std::wcout << L"alkalinityReading: "<< alkalinityReading << L"\n";*/
-			//int wait;
-			//std::cin >> wait;
-			
+			std::wcout << L"alkalinityReading: "<< alkalinityReading << L"\n";
+			int wait;
+			std::cin >> wait;
+			*/
 
 			/*move to random location*/
-			int size = paths[playerLocation-1].size();
+			/*int size = paths[playerLocation-1].size();
 			int random = rand() % size;
 
-			_ULonglong theMove = paths[playerLocation-1][random];
-			std::wstring playerMove  = L"" + std::to_wstring(theMove);
-			std::wstring playerMove2 = L"S";
+			_ULonglong theMove = paths[playerLocation-1][random];*/
+
 
 			gameStillGoingOn = session.makeMove (playerMove ,playerMove2, score);	
 		}
