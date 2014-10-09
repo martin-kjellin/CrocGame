@@ -24,6 +24,9 @@ std::vector<std::pair<double,double>> alkalinity;
 //probability: fill with 1/35
 double probability[35] = {}; //index 0 is waterhole 1
 
+bool triedSpots[35];
+int triedSpotsTime[35];
+
 std::map<int,int> length;
 std::map<int,int> parent;
 std::vector<int> fastPath;
@@ -121,6 +124,7 @@ void accountForBackpackersStart(){
 		}
 	}
 }
+
 //change the probability depending on backpackers
 void accountForBackpackersDuring(){
 	if(backpacker1Activity > 0){
@@ -201,18 +205,34 @@ int _tmain(int argc, _TCHAR* argv[])
 	paths = session.getPaths();
 	for(int i = 0; i < 100; i++){
 		bool gameStillGoingOn = true;
+		std::fill(std::begin(triedSpots),std::end(triedSpots),false);
 		session.StartGame();
-		session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading); //run here to get info for accountForBackpackersStart
-		session.GetGameDistributions(calcium, salinity, alkalinity);
-		accountForBackpackersStart();
+		//session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading); //run here to get info for accountForBackpackersStart
+		//session.GetGameDistributions(calcium, salinity, alkalinity);
+		//accountForBackpackersStart();
 		while(gameStillGoingOn){
 			session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading);
 			int t;
+			if(score==0) {
+				std::fill(std::begin(triedSpots),std::end(triedSpots),false);
+				std::fill(std::begin(triedSpotsTime),std::end(triedSpotsTime),-1);
+				session.GetGameDistributions(calcium, salinity, alkalinity);
+				accountForBackpackersStart();
+			}
 			calculateProbability(calciumReading, salineReading, alkalinityReading);
 			accountForBackpackersDuring();
 
 			breadthFirstSearch(playerLocation-1);
 			makeFastPath(playerLocation-1);
+
+			for(int i=0;i<35;i++) {
+				if(triedSpotsTime[i]<score+10) {
+					triedSpots[i]=0;
+				}
+				if(triedSpots[i]) {    //makes a player not look at a certain already inspected spot unless it's been a long time since it was inspected
+					probability[i]=0;
+				}
+			}
 
 			auto maxElement = std::max_element(std::begin(probability),std::end(probability));
 			int maxIndex = std::distance(std::begin(probability),maxElement);
@@ -230,23 +250,20 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 
 			if(fastPath.size()==1) {
-				auto maxElement = std::max_element(std::begin(probability),std::end(probability));
-				int maxIndex = std::distance(std::begin(probability),maxElement);
-
 				std::wstring s = L"S";
 				_ULonglong theMove = maxIndex+1;
 				std::wstring theRealMove = L"" + std::to_wstring(theMove);
 				gameStillGoingOn = session.makeMove(s,theRealMove,score);
-
+				triedSpots[maxIndex]=true;
+				triedSpotsTime[maxIndex]=score;
 
 			} else if(fastPath.size()==2) {
-				auto maxElement = std::max_element(std::begin(probability),std::end(probability));
-				int maxIndex = std::distance(std::begin(probability),maxElement);
-
 				std::wstring s = L"S";
 				_ULonglong theMove = maxIndex+1;
 				std::wstring theRealMove = L"" + std::to_wstring(theMove);
 				gameStillGoingOn = session.makeMove(theRealMove,s,score);
+				triedSpots[maxIndex]=true;
+				triedSpotsTime[maxIndex]=score;
 
 			} else if(fastPath.size()>2) {
 				_ULonglong theMove = fastPath[fastPath.size()-2]+1;
@@ -258,7 +275,7 @@ int _tmain(int argc, _TCHAR* argv[])
 				length.clear();
 				parent.clear();
 
-				Sleep(5000);
+				Sleep(3000);
 		}
 	}
 	session.PostResults();
