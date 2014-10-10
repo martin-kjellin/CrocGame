@@ -193,7 +193,7 @@ void accountForBackpackersDuring(){
 double valueProbability(double reading, double mean, double std_dev){
 	//normal distribution -> pdf 
 	double p;
-	double pi = 3.141592653589793;
+	double pi = 3.14159265358979323846264338;
 
 	p = (1 / (std_dev * sqrt(2* pi))) * exp(-((reading-mean)*(reading-mean))/(2*std_dev*std_dev));
 	return p;
@@ -241,7 +241,18 @@ void calculateProbability (double readingCalcium, double readingSalinity, double
 			newProbability[c][i] = dataProb;
 		}
 	}
+	
+	for(c=0;c<3;c++){
+		double sumisum = 0;
+	for(t = 0; t < 35; t++){
+		sumisum += newProbability[c][i];
+	}
+	for(t = 0; t < 35; t++){
+		newProbability[c][i] = newProbability[c][i] / sumisum;
+	}
 
+	}
+	
 	for(t = 0; t < 35; t++){
 		//multiply the probabilities given the different observations
 		probability[t] = newProbability[0][t] * newProbability[1][t] * newProbability[2][t] * newProbability[3][t];
@@ -264,27 +275,30 @@ int _tmain(int argc, _TCHAR* argv[])
 	bool OK;
 	CrocSession session(name, OK);
 	paths = session.getPaths();
-	for(int e = 0; e <100;e++){
+	while(true){
 		session.ClearRecord();
 		for(int i = 0; i < 100; i++){
 			bool gameStillGoingOn = true;
+			score2 = 0;
 
 			session.StartGame();
-			session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading); //run here to get info for accountForBackpackersStart
-			session.GetGameDistributions(calcium, salinity, alkalinity);
-			accountForBackpackersStart();
+			
 
 			while(gameStillGoingOn){
-				session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading);
-				//int t;
-				//for(t = 0; t < 35; t++){
-				//std::wcout << t +1 << ": " << probability[t] << "\n";
-				//}
 
-				calculateProbability(calciumReading, salineReading, alkalinityReading);
-				accountForBackpackersDuring();
-
-				double maxValue = 0.0;
+				if(score2 == 0){
+					session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading); //run here to get info for accountForBackpackersStart
+					session.GetGameDistributions(calcium, salinity, alkalinity);
+					accountForBackpackersStart();
+					std::wstring playerMove = L"S";
+					std::wstring playerMove2 = L"S";
+					gameStillGoingOn = session.makeMove (playerMove ,playerMove2, score2);	
+				}
+				else{
+					session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading);
+					calculateProbability(calciumReading, salineReading, alkalinityReading);
+					accountForBackpackersDuring();
+					double maxValue = 0.0;
 				int index, maxIndex; // index of min in probability - 1 
 				for(index = 0; index < 35; index++){
 					if(probability[index] > maxValue){
@@ -336,6 +350,9 @@ int _tmain(int argc, _TCHAR* argv[])
 
 
 				gameStillGoingOn = session.makeMove (playerMove ,playerMove2, score2);	
+				}
+
+				
 			}
 			//std::wcout << L"score: " << score2 << "\n"; //
 		}
