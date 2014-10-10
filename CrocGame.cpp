@@ -166,9 +166,9 @@ void calculateProbability (double readingCalcium, double readingSalinity, double
   for (int i = 0; i < 35; i++) {
     for (int j = 0; j < paths[i].size(); j++) {
       int adjNode = paths[i][j];
-      newProbability[i] += (1.0 / paths[adjNode-1].size()) * probability[adjNode-1]; // Croc comes from an adjacent waterhole
+      newProbability[i] += (1.0 / (paths[adjNode-1].size() + 1)) * probability[adjNode-1]; // Croc comes from an adjacent waterhole
     }
-    newProbability[i] += (1.0 / paths[i].size()) * probability[i]; // Croc stays at the same waterhole
+    newProbability[i] += (1.0 / (paths[i].size() + 1)) * probability[i]; // Croc stays at the same waterhole
 
     double mean;
     double std_dev;
