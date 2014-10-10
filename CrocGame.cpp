@@ -289,7 +289,7 @@ int _tmain(int argc, _TCHAR* argv[])
 					}
 				}
 
-				std::vector<int> path = aStar(playerLocation, maxIndex - 1);
+				std::vector<int> path = aStar(playerLocation, maxIndex /*-*/ + 1);
 				_ULonglong theMove1;
 				_ULonglong theMove2;
 				std::wstring playerMove;
