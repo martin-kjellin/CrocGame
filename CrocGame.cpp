@@ -152,15 +152,6 @@ double valueProbability(double reading, double mean, double std_dev){
 }
 
 //calculates the probability for croc being at each waterhole and saves it in probability.
-double valueProbability(double reading, double mean, double std_dev){
-	//normal distribution -> pdf
-	double p;
-	double pi = 3.141592653589793;
-	p = (1 / (std_dev * sqrt(2* pi))) * exp(-((reading-mean)*(reading-mean))/(2*std_dev*std_dev));
-	return p;
-}
-
-//calculates the probability for croc being at each waterhole and saves it in probability.
 void calculateProbability (double readingCalcium, double readingSalinity, double readingAlkalinity) {
   double newProbability[35] = {};
   for (int i = 0; i < 35; i++) {
