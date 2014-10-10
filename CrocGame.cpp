@@ -152,49 +152,62 @@ double valueProbability(double reading, double mean, double std_dev){
 }
 
 //calculates the probability for croc being at each waterhole and saves it in probability.
-void calculateProbability (double readingCalcium, double readingSalinity, double readingAlkalinity){
-	int c, i, j, t;
-	double newProbability[3][35] = {{},{},{}};
-	for(c = 0; c < 3; c++){ //0 = calcium, 1 = salinity, 2 = alkalinity
-		for(i=0; i < 35; i++){
-			for(j=0; j < paths[i].size(); j++){
-				int adjNode = paths[i][j];
-				newProbability[c][i] += (1.0 / (paths[adjNode-1].size() + 1)) * probability[adjNode-1]; //P(Xt+1 | Xt)* P(Xt | E1:t) //P(croc comes from any adjecent waterhole)
-			}
-			newProbability[c][i] += (1.0 / (paths[i].size() + 1)) * probability[i]; //P(croc stay at the waterhole)
-			//get the mean and standard deviation
-			double mean;
-			double std_dev;
-			double dataProb;
-			switch(c){
-			case 0:
-				mean = calcium[i].first;
-				std_dev = calcium[i].second;
-				dataProb = valueProbability(readingCalcium, mean, std_dev); // P(Et+1 | X)
-			case 1:
-				mean = salinity[i].first;
-				std_dev = salinity[i].second;
-				dataProb = valueProbability(readingSalinity, mean, std_dev); // P(Et+1 | X)
-			case 2:
-				mean = alkalinity[i].first;
-				std_dev = alkalinity[i].second;
-				dataProb = valueProbability(readingAlkalinity, mean, std_dev); // P(Et+1 | X)
-			}
-			newProbability[c][i] *= dataProb;
-		}
-	}
-	for(t = 0; t < 35; t++){
-		//multiply the probabilities given the different observations
-		probability[t] = newProbability[0][t] * newProbability[1][t] * newProbability[2][t];
-	}
-	//normalize
-	double sum = 0;
-	for(t = 0; t < 35; t++){
-		sum += probability[t];
-	}
-	for(t = 0; t < 35; t++){
-		probability[t] = probability[t] / sum;
-	}
+double valueProbability(double reading, double mean, double std_dev){
+	//normal distribution -> pdf
+	double p;
+	double pi = 3.141592653589793;
+	p = (1 / (std_dev * sqrt(2* pi))) * exp(-((reading-mean)*(reading-mean))/(2*std_dev*std_dev));
+	return p;
+}
+
+//calculates the probability for croc being at each waterhole and saves it in probability.
+void calculateProbability (double readingCalcium, double readingSalinity, double readingAlkalinity) {
+  double newProbability[35] = {};
+  for (int i = 0; i < 35; i++) {
+    for (int j = 0; j < paths[i].size(); j++) {
+      int adjNode = paths[i][j];
+      newProbability[i] += (1.0 / paths[adjNode-1].size()) * probability[adjNode-1]; // Croc comes from an adjacent waterhole
+    }
+    newProbability[i] += (1.0 / paths[i].size()) * probability[i]; // Croc stays at the same waterhole
+
+    double mean;
+    double std_dev;
+    double dataProb;
+
+    for (int c = 0; c < 3; c++) { //0 = calcium, 1 = salinity, 2 = alkalinity
+      switch (c) {
+      case 0:
+	mean = calcium[i].first;
+	std_dev = calcium[i].second;
+	dataProb = valueProbability(readingCalcium, mean, std_dev);
+	break;
+      case 1:
+	mean = salinity[i].first;
+	std_dev = salinity[i].second;
+	dataProb = valueProbability(readingSalinity, mean, std_dev);
+	break;
+      case 2:
+	mean = alkalinity[i].first;
+	std_dev = alkalinity[i].second;
+	dataProb = valueProbability(readingAlkalinity, mean, std_dev);
+	break;
+      }
+      newProbability[i] *= dataProb;
+    }
+  }
+
+  for (int i = 0; i < 35; i++) {
+    probability[i] = newProbability[i];
+  }
+
+  //normalize
+  double sum = 0;
+  for (int i = 0; i < 35; i++) {
+    sum += probability[i];
+  }
+  for(int i = 0; i < 35; i++){
+    probability[i] = probability[i] / sum;
+  }
 }
 
 int _tmain(int argc, _TCHAR* argv[])
