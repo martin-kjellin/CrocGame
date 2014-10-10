@@ -45,7 +45,6 @@ void makeFastPath(int startLocation) {
 		fastPath.push_back(parent[currentIndex]);
 		currentIndex = parent[currentIndex];
 	}
-
 }
 
 void breadthFirstSearch(int currentLocation) {
@@ -99,6 +98,13 @@ void fillProbability(double value){
 	}
 }
 
+void fillDiffProbability(double value){
+	int i;
+	for(i = 0; i < 35; i++){
+		diffProbability[i] = value;
+	}
+}
+
 //sets the start probabilities while accounting for backpackers
 void accountForBackpackersStart(){
 	int t;
@@ -142,6 +148,8 @@ void accountForBackpackersDuring(){
 		probability[abs(backpacker2Activity)-1] = 1.0;
 	}
 }
+
+
 //return probability for reading given mean and stard deviation
 double valueProbability(double reading, double mean, double std_dev){
 	//normal distribution -> pdf
@@ -153,137 +161,144 @@ double valueProbability(double reading, double mean, double std_dev){
 
 //calculates the probability for croc being at each waterhole and saves it in probability.
 void calculateProbability (double readingCalcium, double readingSalinity, double readingAlkalinity) {
-  double newProbability[35] = {};
-  for (int i = 0; i < 35; i++) {
-    for (int j = 0; j < paths[i].size(); j++) {
-      int adjNode = paths[i][j];
-      newProbability[i] += (1.0 / (paths[adjNode-1].size() + 1)) * probability[adjNode-1]; // Croc comes from an adjacent waterhole
-    }
-    newProbability[i] += (1.0 / (paths[i].size() + 1)) * probability[i]; // Croc stays at the same waterhole
-
-    double mean;
-    double std_dev;
-    double dataProb;
-
-    for (int c = 0; c < 3; c++) { //0 = calcium, 1 = salinity, 2 = alkalinity
-      switch (c) {
-      case 0:
-	mean = calcium[i].first;
-	std_dev = calcium[i].second;
-	dataProb = valueProbability(readingCalcium, mean, std_dev);
-	break;
-      case 1:
-	mean = salinity[i].first;
-	std_dev = salinity[i].second;
-	dataProb = valueProbability(readingSalinity, mean, std_dev);
-	break;
-      case 2:
-	mean = alkalinity[i].first;
-	std_dev = alkalinity[i].second;
-	dataProb = valueProbability(readingAlkalinity, mean, std_dev);
-	break;
-      }
-      newProbability[i] *= dataProb;
-    }
-  }
-
-  for (int i = 0; i < 35; i++) {
-    probability[i] = newProbability[i];
-  }
-
-  //normalize
-  double sum = 0;
-  for (int i = 0; i < 35; i++) {
-    sum += probability[i];
-  }
-  for(int i = 0; i < 35; i++){
-    probability[i] = probability[i] / sum;
-  }
+	double newProbability[35] = {};
+	for (int i = 0; i < 35; i++) {
+		for (int j = 0; j < paths[i].size(); j++) {
+			int adjNode = paths[i][j];
+			newProbability[i] += (1.0 / (paths[adjNode-1].size() + 1)) * probability[adjNode-1]; // Croc comes from an adjacent waterhole
+		}
+		newProbability[i] += (1.0 / (paths[i].size() + 1)) * probability[i]; // Croc stays at the same waterhole
+		double mean;
+		double std_dev;
+		double dataProb;
+		for (int c = 0; c < 3; c++) { //0 = calcium, 1 = salinity, 2 = alkalinity
+			switch (c) {
+			case 0:
+				mean = calcium[i].first;
+				std_dev = calcium[i].second;
+				dataProb = valueProbability(readingCalcium, mean, std_dev);
+				break;
+			case 1:
+				mean = salinity[i].first;
+				std_dev = salinity[i].second;
+				dataProb = valueProbability(readingSalinity, mean, std_dev);
+				break;
+			case 2:
+				mean = alkalinity[i].first;
+				std_dev = alkalinity[i].second;
+				dataProb = valueProbability(readingAlkalinity, mean, std_dev);
+				break;
+			}
+			newProbability[i] *= dataProb;
+		}
+	}
+	for (int i = 0; i < 35; i++) {
+		probability[i] = newProbability[i];
+	}
+	//normalize
+	double sum = 0;
+	for (int i = 0; i < 35; i++) {
+		sum += probability[i];
+	}
+	for(int i = 0; i < 35; i++){
+		probability[i] = probability[i] / sum;
+	}
 }
 
 int _tmain(int argc, _TCHAR* argv[])
 {
 	std::wstring name = L"Sverrir, Sander, Martin och Malin";
 	bool OK;
-	CrocSession session(name, OK);
-	paths = session.getPaths();
-	for(int i = 0; i < 100; i++){
-		bool gameStillGoingOn = true;
-		std::fill(std::begin(triedSpots),std::end(triedSpots),false);
-		session.StartGame();
-		//session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading); //run here to get info for accountForBackpackersStart
-		//session.GetGameDistributions(calcium, salinity, alkalinity);
-		//accountForBackpackersStart();
-		while(gameStillGoingOn){
-			session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading);
-			int t;
-			if(score==0) {
-				std::fill(std::begin(triedSpots),std::end(triedSpots),false);
-				std::fill(std::begin(triedSpotsTime),std::end(triedSpotsTime),-1);
-				session.GetGameDistributions(calcium, salinity, alkalinity);
-				accountForBackpackersStart();
-			}
-			calculateProbability(calciumReading, salineReading, alkalinityReading);
-			accountForBackpackersDuring();
+	while(true) {
+		CrocSession session(name, OK);
+		paths = session.getPaths();
+		for(int i = 0; i < 100; i++){
+			bool gameStillGoingOn = true;
+			std::fill(std::begin(triedSpots),std::end(triedSpots),false);
+			session.StartGame();
+			//session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading); //run here to get info for accountForBackpackersStart
+			//session.GetGameDistributions(calcium, salinity, alkalinity);
+			//accountForBackpackersStart();
+			while(gameStillGoingOn){
+				session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading);
+				int t;
+				if(score==0) {
 
-			breadthFirstSearch(playerLocation-1);
-			makeFastPath(playerLocation-1);
+					//std::wcout << L"Games played = " << session.getPlayed() << L"\n";
+					//std::wcout << L"Get average = " << session.getAverage() << L"\n";
 
-			for(int i=0;i<35;i++) {
-				if(triedSpotsTime[i]<score+10) {
-					triedSpots[i]=0;
+					std::fill(std::begin(triedSpots),std::end(triedSpots),false);
+					std::fill(std::begin(triedSpotsTime),std::end(triedSpotsTime),-1);
+					session.GetGameDistributions(calcium, salinity, alkalinity);
+					accountForBackpackersStart();
 				}
-				if(triedSpots[i]) {    //makes a player not look at a certain already inspected spot unless it's been a long time since it was inspected
-					probability[i]=0;
+				calculateProbability(calciumReading, salineReading, alkalinityReading);
+				accountForBackpackersDuring();
+
+				breadthFirstSearch(playerLocation-1);
+				makeFastPath(playerLocation-1);
+
+				for(int k=0;k<35;k++) {
+					if(triedSpotsTime[k]<score+6) {
+						triedSpots[k]=0;
+					}
+					if(triedSpots[k]) {    //makes a player not look at a certain already inspected spot unless it's been a long time since it was inspected
+						probability[k]=0;
+					}
 				}
-			}
 
-			auto maxElement = std::max_element(std::begin(probability),std::end(probability));
-			int maxIndex = std::distance(std::begin(probability),maxElement);
+				auto maxElement = std::max_element(std::begin(probability),std::end(probability));
+				int maxIndex = std::distance(std::begin(probability),maxElement);
 
-			std::wcout << L"Score: " << score << L"\n";
+				//std::wcout << L"Score: " << score << L"\n";
 
-			std::wcout << L"Location: " << playerLocation-1 << L"\n";
-			std::wcout << L"Goal: " << maxIndex << L"\n";
+				//std::wcout << L"Location: " << playerLocation-1 << L"\n";
+				//std::wcout << L"Goal: " << maxIndex << L"\n";
 
-			std::wcout << L"probability[maxIndex] = " << probability[maxIndex] << L"\n";
+				//std::wcout << L"probability[maxIndex] = " << probability[maxIndex] << L"\n";
 
-			for(int i=0;i<fastPath.size();i++) {
-				std::wcout << L"fastPath[" << i << L"] = " << fastPath[i] << L"\n";
-				if(i==fastPath.size()-1) std::wcout << L"\n";
-			}
+				//for(int i=0;i<fastPath.size();i++) {
+				//	std::wcout << L"fastPath[" << i << L"] = " << fastPath[i] << L"\n";
+				//	if(i==fastPath.size()-1) std::wcout << L"\n";
+				//}
 
-			if(fastPath.size()==1) {
-				std::wstring s = L"S";
-				_ULonglong theMove = maxIndex+1;
-				std::wstring theRealMove = L"" + std::to_wstring(theMove);
-				gameStillGoingOn = session.makeMove(s,theRealMove,score);
-				triedSpots[maxIndex]=true;
-				triedSpotsTime[maxIndex]=score;
+				if(fastPath.size()==1) {
+					std::wstring s = L"S";
+					_ULonglong theMove = maxIndex+1;
+					std::wstring theRealMove = L"" + std::to_wstring(theMove);
+					gameStillGoingOn = session.makeMove(s,theRealMove,score);
+					triedSpots[maxIndex]=true;
+					triedSpotsTime[maxIndex]=score;
 
-			} else if(fastPath.size()==2) {
-				std::wstring s = L"S";
-				_ULonglong theMove = maxIndex+1;
-				std::wstring theRealMove = L"" + std::to_wstring(theMove);
-				gameStillGoingOn = session.makeMove(theRealMove,s,score);
-				triedSpots[maxIndex]=true;
-				triedSpotsTime[maxIndex]=score;
+				} else if(fastPath.size()==2) {
+					std::wstring s = L"S";
+					_ULonglong theMove = maxIndex+1;
+					std::wstring theRealMove = L"" + std::to_wstring(theMove);
+					gameStillGoingOn = session.makeMove(theRealMove,s,score);
+					triedSpots[maxIndex]=true;
+					triedSpotsTime[maxIndex]=score;
 
-			} else if(fastPath.size()>2) {
-				_ULonglong theMove = fastPath[fastPath.size()-2]+1;
-				std::wstring firstMove = L"" + std::to_wstring(theMove);
-				theMove = fastPath[fastPath.size()-3]+1;
-				std::wstring secondMove = L"" + std::to_wstring(theMove);
-				gameStillGoingOn = session.makeMove(firstMove,secondMove,score);
-			}
+				} else if(fastPath.size()>2) {
+					_ULonglong theMove = fastPath[fastPath.size()-2]+1;
+					std::wstring firstMove = L"" + std::to_wstring(theMove);
+					theMove = fastPath[fastPath.size()-3]+1;
+					std::wstring secondMove = L"" + std::to_wstring(theMove);
+					gameStillGoingOn = session.makeMove(firstMove,secondMove,score);
+				}
 				length.clear();
 				parent.clear();
 
-				Sleep(3000);
+				//if(session.getAverage() > 100) {
+				//	std::wcout << L"Games finished before reboot = " << session.getPlayed() << L"\n";
+				//	session.ClearRecord();
+				//	gameStillGoingOn=false;
+				//	i=0;
+				//}
+				//Sleep(3000);
+			}
 		}
-	}
-	session.PostResults();
-	std::wcout << L"Average: " << session.getAverage() << "\n"; //
-	while(true);
+		session.PostResults();
+		std::wcout << L"Average: " << session.getAverage() << "\n";
+		}
 	return 0;
-}
+	}
