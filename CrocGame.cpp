@@ -175,14 +175,17 @@ void calculateProbability (double readingCalcium, double readingSalinity, double
 					mean = calcium[i].first;
 					std_dev = calcium[i].second;
 					dataProb = valueProbability(readingCalcium, mean, std_dev); // P(Et+1 | X)
+					break;
 				case 1:
 					mean = salinity[i].first;
 					std_dev = salinity[i].second;
 					dataProb = valueProbability(readingSalinity, mean, std_dev); // P(Et+1 | X)
+					break;
 				case 2:
 					mean = alkalinity[i].first;
 					std_dev = alkalinity[i].second;
 					dataProb = valueProbability(readingAlkalinity, mean, std_dev); // P(Et+1 | X)
+					break;
 				}
 				newProbability[c][i] = dataProb;
 			}
