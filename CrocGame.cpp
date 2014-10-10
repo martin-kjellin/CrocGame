@@ -205,11 +205,12 @@ void calculateProbability (double readingCalcium, double readingSalinity, double
 
 	double newProbability[4][35] = {{},{},{},{}};
 	for(i=0; i < 35; i++){
-			for(j=0; j < paths[i].size(); j++){
-				int adjNode = paths[i][j];
-				newProbability[3][i] += (1.0 / (paths[adjNode-1].size() + 1)) * probability[adjNode-1]; //P(Xt+1 | Xt)* P(Xt | E1:t)  //P(croc comes from any adjecent waterhole)
-			}
-			newProbability[3][i] += (1.0 / (paths[i].size() + 1)) * probability[i]; //P(croc stay at the waterhole)
+		newProbability[3][i] = (1.0 / (paths[i].size() + 1)) * probability[i]; //P(croc stay at the waterhole)
+		for(j=0; j < paths[i].size(); j++){
+			int adjNode = paths[i][j];
+			newProbability[3][i] += (1.0 / (paths[adjNode-1].size() + 1)) * probability[adjNode-1]; //P(Xt+1 | Xt)* P(Xt | E1:t)  //P(croc comes from any adjecent waterhole)
+		}
+
 	}
 
 	for(c = 0; c < 3; c++){ //0 = calcium, 1 = salinity, 2 = alkalinity 
