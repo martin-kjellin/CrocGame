@@ -22,8 +22,8 @@ std::vector<std::pair<double,double>> calcium;
 std::vector<std::pair<double,double>> salinity;
 std::vector<std::pair<double,double>> alkalinity;
 //probability: fill with 1/35
-double probability[35] = {}; //index 0 is waterhole 1
 double diffProbability[35] = {};
+std::map<int,double> probMap;
 
 bool triedSpots[35];
 int triedSpotsTime[35];
@@ -36,14 +36,21 @@ bool once = true;
 
 double totalScore = 0;
 int totalGamesPlayed = 0;
+std::vector<double> allScores;
+double bestScoreSoFar = 100;
 
-void makeFastPath(int startLocation) {
+void makeDiffMap() {
+	probMap.clear();
+	for(int i=0;i<35;i++) {
+		probMap[0]=diffProbability[i];
+	}
+}
+
+void makeFastPath(int startLocation,int maxIndex) {
 	fastPath.clear();
-	//auto maxElement = std::max_element(std::begin(probability),std::end(probability));
-	//int maxIndex = std::distance(std::begin(probability),maxElement);
 
-	auto maxElement = std::max_element(std::begin(diffProbability),std::end(diffProbability));
-	int maxIndex = std::distance(std::begin(diffProbability),maxElement);
+	//auto maxElement = std::max_element(std::begin(diffProbability),std::end(diffProbability));
+	//int maxIndex = std::distance(std::begin(diffProbability),maxElement);
 
 	int currentIndex=maxIndex;
 
@@ -58,11 +65,9 @@ void makeFastPath(int startLocation) {
 void breadthFirstSearch(int currentLocation) {
 
 	if(currentLocation==playerLocation-1) {  //starting place
-		//std::wcout << L"Starting node = " << (currentLocation) << L"\n";
 		length[currentLocation] = 0;
 
 		for(int i=0;i<paths[currentLocation].size();i++) {
-			//std::wcout << L"Neighbour " << (i+1) << L" = " << (paths[currentLocation][i]-1) << L"\n";
 		}
 
 
@@ -70,8 +75,6 @@ void breadthFirstSearch(int currentLocation) {
 			int currentNode = paths[currentLocation][i]-1;
 			parent[currentNode]=currentLocation;
 			length[currentNode]=length[parent[currentNode]]+1;
-			//std::wcout << L"The node " << currentNode << L" has the parent node " << parent[currentNode] << L"\n";
-			//std::wcout << L"The node " << currentNode << L" has the length " << length[currentNode] << L"\n";
 		}
 
 		for(int i=0;i<paths[currentLocation].size();i++) {
@@ -87,8 +90,6 @@ void breadthFirstSearch(int currentLocation) {
 					parent[currentNode]=currentLocation;
 					length[currentNode]=length[parent[currentNode]]+1;
 					breadthFirstSearch(currentNode);
-					//std::wcout << L"The node " << currentNode << L" has the parent node " << parent[currentNode] << L"\n";
-					//std::wcout << L"The node " << currentNode << L" has the length " << length[currentNode] << L"\n";
 				}
 			} else {
 				parent[currentNode]=currentLocation;
@@ -230,6 +231,9 @@ int _tmain(int argc, _TCHAR* argv[])
 
 			bool gameStillGoingOn = true;
 			session.StartGame();
+			//session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading); //run here to get info for accountForBackpackersStart
+			//session.GetGameDistributions(calcium, salinity, alkalinity);
+			//accountForBackpackersStart();
 			while(gameStillGoingOn){
 				session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading);
 				int t;
@@ -255,32 +259,52 @@ int _tmain(int argc, _TCHAR* argv[])
 
 				accountForBackpackersDuring();
 
-				breadthFirstSearch(playerLocation-1);
-				makeFastPath(playerLocation-1);
-
 				auto maxElement = std::max_element(std::begin(diffProbability),std::end(diffProbability));
 				int maxIndex = std::distance(std::begin(diffProbability),maxElement);
 
-				//std::wcout << L"Score: " << score << L"\n";
+				//find max as double, not double*
 
-				///std::wcout << L"probability[maxIndex] = " << diffProbability[maxIndex] << L"\n";
-				//std::wcout << "salineReading = " << salineReading << ", calciumReading = " << calciumReading << ", alkalinityReading = " << alkalinityReading << "\n";
-				//std::wcout << "salineReading[maxIndex] = " << salinity[maxIndex].first << ", calciumReading[maxIndex] = " << calcium[maxIndex].first << ", alkReading[maxIndex] = " << alkalinity[maxIndex].first << "\n"  << "\n";
+				double maxProb=0;
+				for(int i=0;i<35;i++) {
+					if(diffProbability[i]>maxProb) {
+						maxProb=diffProbability[i];
+					}
+				}
 
-				//std::wcout << L"Location: " << playerLocation-1 << L"\n";
-				//std::wcout << L"Goal: " << maxIndex << L"\n";
+				if(maxProb<0.15 && ((playerLocation-1)!= maxIndex)) {
+					int length1 = length[31];
+					int length2 = length[32];
+					int length3 = length[33];
 
-				//for(int i=0;i<fastPath.size();i++) {
-				//	std::wcout << L"fastPath[" << i << L"] = " << fastPath[i] << L"\n";
-				//	if(i==fastPath.size()-1) std::wcout << L"\n";
-				//}
+					if(length1<length2 && length1<length3) {
+						maxIndex = 31;
+					}
+
+					if(length2<length1 && length2<length3) {
+						maxIndex = 32;
+					}
+
+					if(length3<length1 && length3<length2) {
+						maxIndex = 33;
+					}
+				}
+
+				breadthFirstSearch(playerLocation-1);
+				makeFastPath(playerLocation-1,maxIndex);
 
 				if(fastPath.size()==1) {
 
-					diffProbability[maxIndex]=0;
+					diffProbability[maxIndex]=0.0;
 
-					auto maxElement = std::max_element(std::begin(diffProbability),std::end(diffProbability));
-					int maxIndex = std::distance(std::begin(diffProbability),maxElement);
+					//makeDiffMap();
+
+					////maxIndex=paths[playerLocation-1][0]-1;
+					////int neighbourSize=paths[playerLocation-1].size();
+					////for(int i=0;i<neighbourSize;i++) {
+					////	if (probMap[(paths[playerLocation-1][i])-1]>probMap[maxIndex]) {
+					////		maxIndex=paths[playerLocation-1][i]-1;
+					////	}
+					////}
 
 					std::wstring s = L"S";
 					_ULonglong theMove = maxIndex+1;
@@ -309,24 +333,36 @@ int _tmain(int argc, _TCHAR* argv[])
 				parent.clear();
 
 				int playedGames = session.getPlayed();
-				int avrg = session.getAverage();
+				double avrg = session.getAverage();
 
-				if((playedGames>50 && avrg>14) || (playedGames>20 && avrg>12) || (playedGames>10 && avrg>10) || (playedGames>5 && avrg>8)) {
+				if((playedGames>70 && (session.getAverage())>13.5) || (playedGames>40 && (session.getAverage())>14) || (playedGames>20 && (session.getAverage()>16)) || (playedGames>10 && (session.getAverage()>19))) {
+					std::wcout << L"Abrt at game " << session.getPlayed() << ", avrg score " << session.getAverage() << ", best score so far: " << bestScoreSoFar << "\n";
 					session.ClearRecord();
 				}
-
-				//Sleep(1000);
 			}
 		}
 		session.PostResults();
 		std::wcout << L"Average: " << session.getAverage() << "\n";
+		if(session.getAverage()<bestScoreSoFar) {
+			bestScoreSoFar = session.getAverage();
+		}
 		totalGamesPlayed++;
 		totalScore += session.getAverage();
+		allScores.push_back(session.getAverage());
 
-		if(totalGamesPlayed % 5 == 0) {
-			std::wcout << L"Average final score so far: " << totalScore/totalGamesPlayed << "\n";
+	//	if(totalGamesPlayed % 5 == 0) {
+			//double mean = totalScore/totalGamesPlayed;
+			//std::wcout << L"Average final score so far: " << totalScore/totalGamesPlayed << "\n";
 
-		}
+			////std dv
+			//double totalSum=0;
+			//for(int i=0;i<totalGamesPlayed;i++) {
+			//	totalSum += (allScores[i]-mean)*(allScores[i]-mean);
+			//}
+			//totalSum = totalSum/(totalGamesPlayed-1);
+			//totalSum = sqrt(totalSum);
+			//std::wcout << L"Standard deviation so far: " << totalSum << "\n";
+	//	}
 
 		}
 	return 0;
