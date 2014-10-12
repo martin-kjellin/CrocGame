@@ -232,7 +232,11 @@ void calculateProbability (double readingCalcium, double readingSalinity, double
 						alkalinity.clear();
 						session.GetGameDistributions(calcium, salinity, alkalinity);
 						accountForBackpackersStart();
+						std::wstring s = L"S";
+						std::wstring theRealMove = L"S";
+						gameStillGoingOn = session.makeMove(s,theRealMove,score);
 					}
+					else{
 					calculateProbability(calciumReading, salineReading, alkalinityReading);
 					accountForBackpackersDuring();
 
@@ -288,8 +292,7 @@ void calculateProbability (double readingCalcium, double readingSalinity, double
 					}
 					length.clear();
 					parent.clear();
-
-					//Sleep(3000);
+					}
 				}
 			}
 			session.PostResults();
