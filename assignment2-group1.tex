@@ -64,7 +64,9 @@ where
 \begin{equation*}
 P^*(S_t|S_{t-1}) = \sum\limits_{i=1}^{35} P(S_t|S_{t-1}=i)P(S_{t-1}=i)  
 \end{equation*}
-(that is, a sum over all possible previous states).
+(that is, a sum over all possible previous states). % Can this be
+                                % corrected/simplified? Not all states are
+                                % actually possible previous states.
 
 The recursive character of
 the transition probabilities calls for a base case, that is, a value $S_0$ for
@@ -72,7 +74,8 @@ each state. If the two backpackers, when the game starts, are at two different
 waterholes and are not being eaten, we set $P(S_0) = 0$ for the waterholes
 where they are and $P(S_0) = \frac{1}{33}$ for all others. That is, we assume
 that the probability is equally distributed over all waterholes except the
-ones where Croc is apparently not currently located.
+ones where Croc is apparently not currently located. % Add text about other
+                                % cases?
 
 The observation probabilities must be calculated from the sensor
 readings. Since we know, for each waterhole, the expectations $\mu$ and the
