@@ -24,7 +24,6 @@ std::vector<std::pair<double,double>> calcium;
 std::vector<std::pair<double,double>> salinity;
 std::vector<std::pair<double,double>> alkalinity;
 
-/////
 class Waterhole {
 public:
 	int id;
@@ -125,14 +124,6 @@ std::vector<int> aStar(int start, int end){
 	return returnValue;
 }
 
-////////////////
-
-
-
-
-
-
-//probability: fill with 1/35
 double probability[35] = {}; //index 0 is waterhole 1
 
 void fillProbability(double value){
@@ -241,7 +232,7 @@ void calculateProbability (double readingCalcium, double readingSalinity, double
 			newProbability[c][i] = dataProb;
 		}
 	}
-	
+
 	for(t = 0; t < 35; t++){
 		//multiply the probabilities given the different observations
 		probability[t] = newProbability[0][t] * newProbability[1][t] * newProbability[2][t] * newProbability[3][t];
@@ -271,12 +262,12 @@ int _tmain(int argc, _TCHAR* argv[])
 			score2 = 0;
 
 			session.StartGame();
-			
+
 
 			while(gameStillGoingOn){
 
 				if(score2 == 0){
-					
+
 					session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading); //run here to get info for accountForBackpackersStart
 					calcium.clear();
 					salinity.clear();
@@ -292,66 +283,46 @@ int _tmain(int argc, _TCHAR* argv[])
 					calculateProbability(calciumReading, salineReading, alkalinityReading);
 					accountForBackpackersDuring();
 					double maxValue = 0.0;
-				int index, maxIndex; // index of min in probability - 1 
-				for(index = 0; index < 35; index++){
-					if(probability[index] > maxValue){
-						maxValue = probability[index];
-						maxIndex = index;
+					int index, maxIndex; 
+					for(index = 0; index < 35; index++){
+						if(probability[index] > maxValue){
+							maxValue = probability[index];
+							maxIndex = index;
+						}
 					}
+
+					std::vector<int> path = aStar(playerLocation, maxIndex + 1);
+					_ULonglong theMove1;
+					_ULonglong theMove2;
+					std::wstring playerMove;
+					std::wstring playerMove2;
+					if(path.size() > 1){
+						theMove1 = path.front();
+						theMove2 = path.at(1);
+
+						playerMove  = L"" + std::to_wstring(theMove1);
+						playerMove2 = L"" + std::to_wstring(theMove2);
+					}
+					else if(path.size() > 0){
+						theMove1 = path.front();
+						playerMove  = L"" + std::to_wstring(theMove1);
+						playerMove2 = L"S";
+					}
+					else{
+						playerMove = L"S";
+						playerMove2 = L"S";
+					}
+
+					gameStillGoingOn = session.makeMove (playerMove ,playerMove2, score2);	
 				}
 
-				std::vector<int> path = aStar(playerLocation, maxIndex + 1);
-				_ULonglong theMove1;
-				_ULonglong theMove2;
-				std::wstring playerMove;
-				std::wstring playerMove2;
-				if(path.size() > 1){
-					theMove1 = path.front();
-					theMove2 = path.at(1);
 
-					playerMove  = L"" + std::to_wstring(theMove1);
-					playerMove2 = L"" + std::to_wstring(theMove2);
-				}
-				else if(path.size() > 0){
-					theMove1 = path.front();
-					playerMove  = L"" + std::to_wstring(theMove1);
-					playerMove2 = L"S";
-				}
-				else{
-					playerMove = L"S";
-					playerMove2 = L"S";
-				}
-
-
-
-				/*std::wcout << L"score: "<< score << L"\n";
-				std::wcout << L"playerLocation: "<< playerLocation << L"\n";
-				std::wcout << L"backpacker1Activity: "<< backpacker1Activity << L"\n";
-				std::wcout << L"backpacker2Activity: "<< backpacker2Activity << L"\n";
-				std::wcout << L"calciumReading: "<< calciumReading << L"\n";
-				std::wcout << L"salineReading: "<< salineReading << L"\n";
-				std::wcout << L"alkalinityReading: "<< alkalinityReading << L"\n";
-				int wait;
-				std::cin >> wait;
-				*/
-
-				/*move to random location*/
-				/*int size = paths[playerLocation-1].size();
-				int random = rand() % size;
-
-				_ULonglong theMove = paths[playerLocation-1][random];*/
-
-
-				gameStillGoingOn = session.makeMove (playerMove ,playerMove2, score2);	
-				}
-
-				
 			}
-			//std::wcout << L"score: " << score2 << "\n"; //
 		}
 		session.PostResults();
-		std::wcout << L"Average: " << session.getAverage() << "\n"; //
+		if(session.getAverage() < 17){
+			std::wcout << L"Average: " << session.getAverage() << "\n"; //
+		}
 	}
-	while(true); 
 	return 0;
 }
