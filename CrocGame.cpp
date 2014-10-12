@@ -179,6 +179,7 @@ void calculateProbability (double readingCalcium, double readingSalinity, double
 		probability[i] = probability[i] / sum;
 	}
 }
+double minAverage = 100;
 int _tmain(int argc, _TCHAR* argv[])
 {
 	std::wstring name = L"Sverrir, Sander, Martin och Malin";
@@ -244,7 +245,11 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 		}
 		session.PostResults();
-		std::wcout << L"Average: " << session.getAverage() << "\n"; //
+
+		if(session.getAverage()  < minAverage){
+			minAverage = session.getAverage();
+			std::wcout << L"Average: " << minAverage << "\n"; //
+		}
 	}
 	while(true);
 	return 0;
