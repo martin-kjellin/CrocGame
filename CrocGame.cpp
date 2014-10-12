@@ -242,17 +242,6 @@ void calculateProbability (double readingCalcium, double readingSalinity, double
 		}
 	}
 	
-	for(c=0;c<3;c++){
-		double sumisum = 0;
-	for(t = 0; t < 35; t++){
-		sumisum += newProbability[c][i];
-	}
-	for(t = 0; t < 35; t++){
-		newProbability[c][i] = newProbability[c][i] / sumisum;
-	}
-
-	}
-	
 	for(t = 0; t < 35; t++){
 		//multiply the probabilities given the different observations
 		probability[t] = newProbability[0][t] * newProbability[1][t] * newProbability[2][t] * newProbability[3][t];
