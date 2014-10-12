@@ -227,6 +227,9 @@ void calculateProbability (double readingCalcium, double readingSalinity, double
 					if(score==0) {
 						std::fill(std::begin(triedSpots),std::end(triedSpots),false);
 						std::fill(std::begin(triedSpotsTime),std::end(triedSpotsTime),-1);
+						calcium.clear();
+						salinity.clear();
+						alkalinity.clear();
 						session.GetGameDistributions(calcium, salinity, alkalinity);
 						accountForBackpackersStart();
 					}
