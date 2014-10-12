@@ -249,7 +249,7 @@ void calculateProbability (double readingCalcium, double readingSalinity, double
 }
 
 int score2= 0;
-int minAvg = 100;
+double minAvg = 100;
 int _tmain(int argc, _TCHAR* argv[])
 {
 	std::wstring name = L"Sverrir, Sander, Martin och Malin";
