@@ -99,13 +99,6 @@ void breadthFirstSearch(int currentLocation) {
 	}
 }
 
-//void fillProbability(double value){
-//	int i;
-//	for(i = 0; i < 35; i++){
-//		probability[i] = value;
-//	}
-//}
-
 void fillDiffProbability(double value){
 	int i;
 	for(i = 0; i < 35; i++){
@@ -231,13 +224,12 @@ int _tmain(int argc, _TCHAR* argv[])
 	while(true) {
 		CrocSession session(name, OK);
 		paths = session.getPaths();
-		for(int i = 0; i < 100; i++){
+		while(true){
+			
+			if(session.getPlayed()==100) break;
+
 			bool gameStillGoingOn = true;
-			std::fill(std::begin(triedSpots),std::end(triedSpots),false);
 			session.StartGame();
-			//session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading); //run here to get info for accountForBackpackersStart
-			//session.GetGameDistributions(calcium, salinity, alkalinity);
-			//accountForBackpackersStart();
 			while(gameStillGoingOn){
 				session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading);
 				int t;
@@ -250,17 +242,10 @@ int _tmain(int argc, _TCHAR* argv[])
 
 					//std::wcout << L"Games played = " << session.getPlayed() << L"\n";
 					//std::wcout << L"Get average = " << session.getAverage() << L"\n";
-
-					std::fill(std::begin(triedSpots),std::end(triedSpots),false);
-					std::fill(std::begin(triedSpotsTime),std::end(triedSpotsTime),-1);
 					session.GetGameDistributions(calcium, salinity, alkalinity);
 
 					accountForBackpackersStart();
 				}
-				//calculateProbability(calciumReading, salineReading, alkalinityReading);
-
-				
-				//std::wcout << L"Calcium = " << calcium[0].first << "\n";
 
 				if(score==0) {
 					diffCalculateProbability(calciumReading,salineReading,alkalinityReading,true);
@@ -268,25 +253,10 @@ int _tmain(int argc, _TCHAR* argv[])
 					diffCalculateProbability(calciumReading,salineReading,alkalinityReading,false);
 				}
 
-				//std::wcout << L"Calcium = " << calcium[0].first << "\n";
-
 				accountForBackpackersDuring();
 
 				breadthFirstSearch(playerLocation-1);
 				makeFastPath(playerLocation-1);
-
-				//for(int k=0;k<35;k++) {
-				//	if(triedSpotsTime[k]<score+10) {
-				//		triedSpots[k]=0;
-				//	}
-				//	if(triedSpots[k]) {    //makes a player not look at a certain already inspected spot unless it's been a long time since it was inspected
-				//		probability[k]=0;
-				//		//diffProbability[k]=0;
-				//	}
-				//}
-
-				//auto maxElement = std::max_element(std::begin(probability),std::end(probability));
-				//int maxIndex = std::distance(std::begin(probability),maxElement);
 
 				auto maxElement = std::max_element(std::begin(diffProbability),std::end(diffProbability));
 				int maxIndex = std::distance(std::begin(diffProbability),maxElement);
@@ -316,8 +286,6 @@ int _tmain(int argc, _TCHAR* argv[])
 					_ULonglong theMove = maxIndex+1;
 					std::wstring theRealMove = L"" + std::to_wstring(theMove);
 					gameStillGoingOn = session.makeMove(s,theRealMove,score);
-					triedSpots[maxIndex]=true;
-					triedSpotsTime[maxIndex]=score;
 
 					diffProbability[maxIndex]=0.0;
 
@@ -326,8 +294,6 @@ int _tmain(int argc, _TCHAR* argv[])
 					_ULonglong theMove = maxIndex+1;
 					std::wstring theRealMove = L"" + std::to_wstring(theMove);
 					gameStillGoingOn = session.makeMove(theRealMove,s,score);
-					triedSpots[maxIndex]=true;
-					triedSpotsTime[maxIndex]=score;
 
 					diffProbability[maxIndex]=0.0;
 
@@ -342,17 +308,16 @@ int _tmain(int argc, _TCHAR* argv[])
 				length.clear();
 				parent.clear();
 
-				if(session.getPlayed()==100) break;
+				int playedGames = session.getPlayed();
+				int avrg = session.getAverage();
 
-				//if(session.getAverage() > 110) {
-				//	std::wcout << L"Games finished before reboot = " << session.getPlayed() << L"\n";
-				//	session.ClearRecord();
-				//	i=0;
-				//}
+				if((playedGames>50 && avrg>14) || (playedGames>20 && avrg>12) || (playedGames>10 && avrg>10) || (playedGames>5 && avrg>8)) {
+					session.ClearRecord();
+				}
+
 				//Sleep(1000);
 			}
 		}
-
 		session.PostResults();
 		std::wcout << L"Average: " << session.getAverage() << "\n";
 		totalGamesPlayed++;
