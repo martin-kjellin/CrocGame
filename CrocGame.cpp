@@ -35,7 +35,7 @@ std::vector<int> fastPath;
 bool once = true;
 
 double totalScore = 0;
-double totalGamesPlayed = 0;
+int totalGamesPlayed = 0;
 
 void makeFastPath(int startLocation) {
 	fastPath.clear();
@@ -306,12 +306,20 @@ int _tmain(int argc, _TCHAR* argv[])
 				//}
 
 				if(fastPath.size()==1) {
+
+					diffProbability[maxIndex]=0;
+
+					auto maxElement = std::max_element(std::begin(diffProbability),std::end(diffProbability));
+					int maxIndex = std::distance(std::begin(diffProbability),maxElement);
+
 					std::wstring s = L"S";
 					_ULonglong theMove = maxIndex+1;
 					std::wstring theRealMove = L"" + std::to_wstring(theMove);
 					gameStillGoingOn = session.makeMove(s,theRealMove,score);
 					triedSpots[maxIndex]=true;
 					triedSpotsTime[maxIndex]=score;
+
+					diffProbability[maxIndex]=0.0;
 
 				} else if(fastPath.size()==2) {
 					std::wstring s = L"S";
@@ -320,6 +328,8 @@ int _tmain(int argc, _TCHAR* argv[])
 					gameStillGoingOn = session.makeMove(theRealMove,s,score);
 					triedSpots[maxIndex]=true;
 					triedSpotsTime[maxIndex]=score;
+
+					diffProbability[maxIndex]=0.0;
 
 				} else if(fastPath.size()>2) {
 					_ULonglong theMove = fastPath[fastPath.size()-2]+1;
@@ -332,6 +342,8 @@ int _tmain(int argc, _TCHAR* argv[])
 				length.clear();
 				parent.clear();
 
+				if(session.getPlayed()==100) break;
+
 				//if(session.getAverage() > 110) {
 				//	std::wcout << L"Games finished before reboot = " << session.getPlayed() << L"\n";
 				//	session.ClearRecord();
@@ -340,9 +352,16 @@ int _tmain(int argc, _TCHAR* argv[])
 				//Sleep(1000);
 			}
 		}
+
 		session.PostResults();
 		std::wcout << L"Average: " << session.getAverage() << "\n";
 		totalGamesPlayed++;
+		totalScore += session.getAverage();
+
+		if(totalGamesPlayed % 5 == 0) {
+			std::wcout << L"Average final score so far: " << totalScore/totalGamesPlayed << "\n";
+
+		}
 
 		}
 	return 0;
