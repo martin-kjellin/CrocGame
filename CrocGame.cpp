@@ -287,7 +287,11 @@ int _tmain(int argc, _TCHAR* argv[])
 			while(gameStillGoingOn){
 
 				if(score2 == 0){
+					
 					session.GetGameState(score, playerLocation, backpacker1Activity, backpacker2Activity, calciumReading, salineReading, alkalinityReading); //run here to get info for accountForBackpackersStart
+					calcium.clear();
+					salinity.clear();
+					alkalinity.clear();
 					session.GetGameDistributions(calcium, salinity, alkalinity);
 					accountForBackpackersStart();
 					std::wstring playerMove = L"S";
