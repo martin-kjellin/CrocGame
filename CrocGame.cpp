@@ -166,7 +166,6 @@ void diffCalculateProbability(double readingCalcium, double readingSalinity, dou
 	if(justStarted) { fillDiffProbability(initValue); }
 	double oldProbability[35];
 
-	double sumNeighbours = 0;
 	for(int i=0;i<35;i++) {
 		oldProbability[i] = diffProbability[i];
 	}
@@ -191,7 +190,6 @@ void diffCalculateProbability(double readingCalcium, double readingSalinity, dou
 
 	for(int i=0;i<35;i++) {
 		int size = paths[i].size();
-		std::array<int,35> neighbours;
 
 		double neighboursSum = 0;
 		for(int j=0;j<size;j++) {
