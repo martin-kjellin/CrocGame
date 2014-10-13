@@ -35,18 +35,20 @@ the park. The search is performed using a \emph{hidden Markov model}
 The overall algorithm that we use to find Croc is as follows. An infinite series of
 game sessions, each consisting of 100 games, is run. In the beginning of each new
 game, each waterhole is assigned a probability of $\frac{1}{35}$ of being Croc's
-current location; in other words we initialize with a uniform distribution. Then, the
+current location; in other words, we initialize with a uniform distribution. Then, the
 following series of steps is repeated until Croc has been found.
 
 The probability of Croc being currently located at each waterhole is estimated using the so-called \emph{state estimation algorithm} (described in
-section~\ref{locate}). %Mention the double normalization? - I don't think we have to :) /Sverrir
+section~\ref{locate}). %Mention the double normalization? - I don't think we
+                       %have to :) /Sverrir - No, you are right, the end
+                       %result is actually the same in both cases /Martin
 When the estimation is finished, the probabilities are adjusted using
 information about the locations of the backpackers. If any such location is a
 positive integer (which means that the backpacker is not being eaten), we know
 that Croc is currently not located at that waterhole. Consequently, the
 probability for that waterhole is set to zero. If, on the other hand, the
 location of a backpacker is a negative integer (which means that the backpacker is
-being eaten), we know for certain that Croc is located at that waterhole. Consequently, the
+being eaten), we know for certain that Croc \emph{is} located at that waterhole. Consequently, the
 probability for the corresponding waterhole is set to one, while the
 probabilities for all other waterholes are set to zero.
 
@@ -55,9 +57,11 @@ waterhole. However, if no waterhole has a probability that is particularly high 
 know for sure which waterhole is actually the most probable. Therefore, we
 decided that if the maximum probability over all the waterholes is lower than 0.15, we don't bother
 moving towards the corresponding waterhole. Instead, we will move towards
-the closest (before the latest pair of moves) of three waterholes that are
+the closest of three waterholes that are
 located at the center of the national 
-park (as indicated by the graph structure). Moving in this way means that we will be fairly
+park, as indicated by the graph structure. (Here, the ``closest'' waterhole is
+actually the one that was closest before we made the latest pair of moves
+according to the rules described below.) Moving in this way means that we will be fairly
 close to all waterholes. This will likely be more beneficial than moving
 towards the currently most probable one, since that waterhole might be located
 far away from the one that will be considered the most probable one in the
@@ -68,7 +72,7 @@ waterhole.
 Then, a standard breadth-first search is performed in order to find a shortest path
 from our current location to the currently most probable waterhole. If the
 length of the path (in number of waterholes) is 1, our current location is the
-most probable waterhole, so we search directly. The probability of our current
+most probable waterhole, so we search directly and then stay where we are. The probability of our current
 location is set to zero, since we know that if Croc is not found during this
 search and another iteration must thus be performed, Croc's correct location
 is not our current one. If the length of the path is two, we make one move
@@ -85,22 +89,19 @@ probably not improve the record and thus is a waste of time) and a new one is st
 \section{Estimating Croc's Location}
 \label{locate}
 
-In a HMM, the state of the world at time $t$ is
+In an HMM, the state of the world at time $t$ is
 described by a state variable $S_t$. We cannot observe this state
-directly. Instead, we have access to a number of observation (evidence)
-variables $O^x_t$ which indirectly provide us with information about the state
+directly. Instead, we can observe a number of output variables $O^x_t$ which indirectly provide us with information about the state
 of the world.
 
 There are two types of probabilities in a HMM: transition probabilities and
-observation probabilities. %Check these terms
-Given that the world was in state $S_{t-1}$ at time $t-1$, it
+output probabilities. Given that the world was in state $S_{t-1}$ at time $t-1$, it
 will be in state $S_t$ at time $t$ with transition probability
 $P(S_t|S_{t-1})$. Given that the world is in state $S_t$, we will observe
-$O^x_t$ with observation probability $P(O^x_t|S_t)$.
+$O^x_t$ with output probability $P(O^x_t|S_t)$.
 
 In this case, the state of the world is Croc's current location (waterhole
-number), so $S_t \in \{1, 2, \dots, 35\}$. %check indexing
-The observation variables $O^c_t$, $O^s_t$, and $O^a_t$ are the current
+number), so $S_t \in \{1, 2, \dots, 35\}$. The output variables $O^c_t$, $O^s_t$, and $O^a_t$ are the current
 readings (of calcium, salinity, and alkalinity, respectively) from the sensor
 that Croc is carrying.
 
@@ -126,16 +127,16 @@ each state. As mentioned in section~\ref{overall}, we set $P(S_0) =
 \frac{1}{35}$ for all waterholes. That is, we assume
 that the probability is equally distributed over all waterholes.
 
-The observation probabilities must be calculated from the sensor
+The output probabilities must be calculated from the sensor
 readings. Since we know, for each waterhole, the expectations $\mu$ and the
-standard deviations $\sigma$ of the distributions from which the readings were
+standard deviations $\sigma$ of the normal distributions from which the readings were
 drawn, we can calculate the value of the probability density function
 $f(O^x_t)$ for each observation $O^x_t$ using the formula
 \begin{equation*}
   f(O^x_t) = \frac{1}{\sigma \sqrt{2 \pi}}e^{-\frac{(O^x_t-\mu)^2}{2\sigma ^2}}
 \end{equation*}
 In a slight abuse of probability theory, these values can then be used as
-observation probabilities. That is, we assume that
+output probabilities. That is, we assume that
 \begin{equation*}
   P(O^x_t|S_t) = f(O^x_t)
 \end{equation*}
@@ -150,7 +151,7 @@ states. The results of the normalization are the desired probabilities $P(S_t|S_
 
 \section{Discussion}
 
-Our program achieves a fairly good result. As of the time of writing, our
+Our program achieves a fairly good result. At the time of writing, our
 record score is 11.28. We think, however, that there is room for improvements:
 \begin{itemize}
 \item Weighing the probabilities for different waterholes using path length
@@ -164,14 +165,13 @@ record score is 11.28. We think, however, that there is room for improvements:
   paths. Instead, the shortest path between each pair of nodes could be
   calculated and stored once and for all. This would speed up the program,
   making it possible to play more games during a certain period of time.
-  \item Sometimes, the player is located at the waterhole which we have established to be Croc's most likely location.
-  As our code is written at the moment, we will in the first step search the location and in the second step stay put -
-  but sometimes we are unlucky and do not find Croc and hence it would be better to do something useful
-  with that second step. We have two ideas in particular, first one being to move to the neighbour of our waterhole 
-  which has the highest probability of containing Croc, alternatively find the waterhole on the whole graph that 
-  is most likely given our current information to contain Croc and then take the first step towards it after finding 
-  the shortest path.
-  b
+  \item Sometimes, the player is located at the waterhole which we have established to be Croc's most probable location.
+  As our code is written at the moment, we will in the first step search the
+  location and in the second step stay put. Sometimes, however, we are unlucky and do not find Croc when searching and hence it would be better to do something useful
+  in that second step. We have two ideas in particular. The first is to move to the neighboring waterhole 
+  which has the highest probability of containing Croc, and the second one
+  is to find the waterhole in the whole graph which has the second highest probability of containing Croc and then take the first step towards it after finding 
+  a shortest path.
 \end{itemize}
 
 \end{document}
