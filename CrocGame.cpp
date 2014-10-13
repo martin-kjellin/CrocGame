@@ -226,6 +226,7 @@ int _tmain(int argc, _TCHAR* argv[])
 					gameStillGoingOn = session.makeMove(s,theRealMove,score);
 					triedSpots[maxIndex]=true;
 					triedSpotsTime[maxIndex]=score;
+					probability[maxIndex] = 0;
 				} else if(fastPath.size()==2) {
 					std::wstring s = L"S";
 					_ULonglong theMove = maxIndex+1;
@@ -233,6 +234,7 @@ int _tmain(int argc, _TCHAR* argv[])
 					gameStillGoingOn = session.makeMove(theRealMove,s,score);
 					triedSpots[maxIndex]=true;
 					triedSpotsTime[maxIndex]=score;
+					probability[maxIndex] = 0;
 				} else if(fastPath.size()>2) {
 					_ULonglong theMove = fastPath[fastPath.size()-2]+1;
 					std::wstring firstMove = L"" + std::to_wstring(theMove);
