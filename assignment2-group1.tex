@@ -35,11 +35,11 @@ the park. The search is performed using a \emph{hidden Markov model}
 The overall algorithm that we use to find Croc is as follows. An infinite series of
 game sessions, each consisting of 100 games, is run. In the beginning of each new
 game, each waterhole is assigned a probability of $\frac{1}{35}$ of being Croc's
-current location. Then, the
+current location; in other words we initialize with a uniform distribution. Then, the
 following series of steps is repeated until Croc has been found.
 
 The probability of Croc being currently located at each waterhole is estimated using the so-called \emph{state estimation algorithm} (described in
-section~\ref{locate}). %Mention the double normalization?
+section~\ref{locate}). %Mention the double normalization? - I don't think we have to :) /Sverrir
 When the estimation is finished, the probabilities are adjusted using
 information about the locations of the backpackers. If any such location is a
 positive integer (which means that the backpacker is not being eaten), we know
@@ -164,6 +164,14 @@ record score is 11.53. We think, however, that there is room for improvements:
   paths. Instead, the shortest path between each pair of nodes could be
   calculated and stored once and for all. This would speed up the program,
   making it possible to play more games during a certain period of time.
+  \item Sometimes, the player is located at the waterhole which we have established to be Croc's most likely location.
+  As our code is written at the moment, we will in the first step search the location and in the second step stay put -
+  but sometimes we are unlucky and do not find Croc and hence it would be better to do something useful
+  with that second step. We have two ideas in particular, first one being to move to the neighbour of our waterhole 
+  which has the highest probability of containing Croc, alternatively find the waterhole on the whole graph that 
+  is most likely given our current information to contain Croc and then take the first step towards it after finding 
+  the shortest path.
+  b
 \end{itemize}
 
 \end{document}
