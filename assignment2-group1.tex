@@ -24,23 +24,66 @@
 
 This report describes our program to compete
 on the Where's Croc game. The goal of the game is to find the crocodile Croc,
-which can be located at any of 35 waterholes in Wollomunga national
+that can be located at any of 35 waterholes in Wollomunga national
 park. Hopefully, he will be found before he eats the two backpackers that roam
-the park. The search is performed using a \emph{hidden Markov model} (HMM).
+the park. The search is performed using a \emph{hidden Markov model}
+(HMM).
 
-The procedure that we use to find Croc is as follows.
+\section{Overall algorithm}
+\label{overall}
 
-Repeat until XXXX
+The overall algorithm that we use to find Croc is as follows. An infinite series of
+game sessions, each consisting of 100 games, is run. In the beginning of each new
+game, each waterhole is assigned a probability of $\frac{1}{35}$ of being Croc's
+current location. Then, the
+following series of steps is repeated until Croc has been found.
 
+The probability of Croc being currently located at each waterhole is estimated using the so-called \emph{state estimation algorithm} (described in
+section~\ref{locate}). %Mention the double normalization?
+When the estimation is finished, the probabilities are adjusted using
+information about the locations of the backpackers. If any such location is a
+positive integer (which means that the backpacker is not being eaten), we know
+that Croc is currently not located at that waterhole. Consequently, the
+probability for that waterhole is set to zero. If, on the other hand, the
+location of a backpacker is a negative integer (which means that the backpacker is
+being eaten), we know for certain that Croc is located at that waterhole. Consequently, the
+probability for the corresponding waterhole is set to one, while the
+probabilities for all other waterholes are set to zero.
 
+In general, we would like to move towards the currently most probable
+waterhole. However, if no waterhole has a probability that is particularly high in comparison to the others, it is hard to
+know for sure which waterhole is actually the most probable. Therefore, we
+decided that if the maximum probability over all the waterholes is lower than 0.15, we don't bother
+moving towards the corresponding waterhole. Instead, we will move towards
+the closest (before the latest pair of moves) of three waterholes that are
+located at the center of the national 
+park (as indicated by the graph structure). Moving in this way means that we will be fairly
+close to all waterholes. This will likely be more beneficial than moving
+towards the currently most probable one, since that waterhole might be located
+far away from the one that will be considered the most probable one in the
+next iteration. We indicate the decision to
+move towards one of the central waterholes by setting it as the most probable
+waterhole.
 
-
+Then, a standard breadth-first search is performed in order to find a shortest path
+from our current location to the currently most probable waterhole. If the
+length of the path (in number of waterholes) is 1, our current location is the
+most probable waterhole, so we search directly. The probability of our current
+location is set to zero, since we know that if Croc is not found during this
+search and another iteration must thus be performed, Croc's correct location
+is not our current one. If the length of the path is two, we make one move
+along the shortest path before we search and set the probability of that
+waterhole to zero. If the length of the path is more than two, we just move
+two steps along the shortest path in order to come closer to Croc. If Croc has
+not been found (as indicated by the return value of moves and searches), the
+game normally continues with a new probability estimation for each of the
+waterholes. However, if the
+average score of the current session is above a certain threshold that
+depends on the number of played games, the session is aborted (as it will
+probably not improve the record and thus is a waste of time) and a new one is started.
 
 \section{Estimating Croc's Location}
-
-In order to find Croc, we first estimate his most probable current
-location using the so-called \emph{state estimation algorithm}. Then, we use
-the result of this estimation to decide where to go next (see section~\ref{hunt}).
+\label{locate}
 
 In a HMM, the state of the world at time $t$ is
 described by a state variable $S_t$. We cannot observe this state
@@ -58,7 +101,7 @@ $O^x_t$ with observation probability $P(O^x_t|S_t)$.
 In this case, the state of the world is Croc's current location (waterhole
 number), so $S_t \in \{1, 2, \dots, 35\}$. %check indexing
 The observation variables $O^c_t$, $O^s_t$, and $O^a_t$ are the current
-readings (of calcium, salinity, and alcalinity, respectively) from the sensor
+readings (of calcium, salinity, and alkalinity, respectively) from the sensor
 that Croc is carrying.
 
 We want to calculate $P(S_t|S_{t-1}, O^c_t, O^s_t, O^a_t)$ for each state,
@@ -74,16 +117,14 @@ P^*(S_t|S_{t-1}) = \sum\limits_{i=1}^{35} P(S_t|S_{t-1}=i)P(S_{t-1}=i)
 \end{equation*}
 (that is, a sum over all possible previous states). % Can this be
                                 % corrected/simplified? Not all states are
-                                % actually possible previous states.
+                                % actually possible previous states, something
+                                % which we use in the program.
 
 The recursive character of
 the transition probabilities calls for a base case, that is, a value $S_0$ for
-each state. If the two backpackers, when the game starts, are at two different
-waterholes and are not being eaten, we set $P(S_0) = 0$ for the waterholes
-where they are and $P(S_0) = \frac{1}{33}$ for all others. That is, we assume
-that the probability is equally distributed over all waterholes except the
-ones where Croc is apparently not currently located. % Add text about other
-                                % cases?
+each state. As mentioned in section~\ref{overall}, we set $P(S_0) =
+\frac{1}{35}$ for all waterholes. That is, we assume
+that the probability is equally distributed over all waterholes.
 
 The observation probabilities must be calculated from the sensor
 readings. Since we know, for each waterhole, the expectations $\mu$ and the
@@ -107,15 +148,22 @@ are not probabilities, that is, their sum is not 1. Therefore, they are
 normalized by being divided by the sum of the calculated values for all
 states. The results of the normalization are the desired probabilities $P(S_t|S_{t-1}, O^c_t, O^s_t, O^a_t)$.
 
-\section{Hunting Croc}
-\label{hunt}
-
-XXXXXXXXXXXXXXXX
-
 \section{Discussion}
 
-
-
-
+Our program achieves a fairly good result. As of the time of writing, our
+record score is 11.53. We think, however, that there is room for improvements:
+\begin{itemize}
+\item Weighing the probabilities for different waterholes using path length
+  might be a good idea, at least if the difference in probabilities between
+  the most current location and the others is small. That is, if Croc's currently most probable location is
+  very distant from our current location, we might better decide to move
+  towards some closer, but slightly less probable, location, thereby hopefully
+  reducing the risk of making expensive mistakes.
+\item Since the graph that we deal with is small and its structure fixed, and since we use standard breadth-first
+  search, there is no real need to repeatedly search the graph for shortest
+  paths. Instead, the shortest path between each pair of nodes could be
+  calculated and stored once and for all. This would speed up the program,
+  making it possible to play more games during a certain period of time.
+\end{itemize}
 
 \end{document}
